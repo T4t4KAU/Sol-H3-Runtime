@@ -20,14 +20,18 @@ mkdir -p "$SOL_H3_WORK/outputs" "$SOL_H3_WORK/logs"
 
 `/Datasets/public_models/SOL-H3` 整个目录需在当前环境中可见。共享环境使用 Python 3.13.9、PyTorch 2.11.0+cu128；不匹配目标设备时，按 [官方安装说明](https://github.com/T4t4KAU/Sol-H3-Runtime/blob/main/official/Sol-H3/README.md#setup) 准备环境并替换 `SOL_H3_PYTHON`。
 
-## 2. 获取代码
+## 2. 放入代码
+
+在本机准备好 [Sol-H3-Runtime 仓库](https://github.com/T4t4KAU/Sol-H3-Runtime) 的完整目录，使用现有文件传输方式上传到服务器的 `$SOL_H3_WORK/repo`。也可在本机下载仓库 ZIP，解压后上传；无需在服务器执行 `git clone`。
+
+上传后，在服务器执行：
 
 ```bash
-git clone https://github.com/T4t4KAU/Sol-H3-Runtime.git "$SOL_H3_WORK/repo"
 cd "$SOL_H3_WORK/repo"
+test -f scripts/run_lins_rtx4090_24g_8gpu.sh
 ```
 
-已有仓库时跳过克隆，保留本地改动，并更新到最新 `main` 分支。
+已有代码时直接复用，并确认是当前仓库版本。代码传输不包含模型权重和 Python 环境，它们使用第 1 节的公共路径。
 
 ## 3. 使用对应的服务器配置
 

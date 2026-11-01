@@ -36,7 +36,8 @@
   "lins_lab_guide": {
     "bash_syntax_blocks_checked": 5,
     "runtime_branch": "main",
-    "basis": "Actual server hardware and deployment records; unvalidated official-count templates are not advertised as server profiles."
+    "basis": "Actual server hardware and deployment records; unvalidated official-count templates are not advertised as server profiles.",
+    "code_transfer": "Upload local repository or extracted ZIP; server-side git clone not required."
   },
   "official_cli_shared_environment": {
     "status": "passed",

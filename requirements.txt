@@ -1,0 +1,2 @@
+# Official dependencies; install the upstream-recommended PyTorch first.
+-r official/Sol-H3/requirements.txt

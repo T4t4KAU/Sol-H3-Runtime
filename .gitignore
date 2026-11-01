@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.venv-*/
+checkpoints/
+weights/
+outputs/
+logs/
+*.safetensors
+*.pt
+*.pth
+*.mp4
+*.wav
+.env

@@ -1,0 +1,21 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+torchaudio==2.11.0+cu128
+accelerate==1.15.0
+av==19.0.1
+cloudpickle==3.1.2
+diffusers @ git+https://github.com/huggingface/diffusers.git@abc5e9bf71fd38f53cd471bc3acaa84bc5ecbfdc
+einops==0.8.1
+huggingface-hub==1.33.0
+numpy==2.5.3
+OpenImageIO==3.1.18.1
+nvidia-cudnn-frontend[cutedsl] @ git+https://github.com/NVIDIA/cudnn-frontend.git@29106622617bfd9031a53099a6fbbc5e74a474e9
+peft==0.20.0
+Pillow==12.3.0
+protobuf==7.36.2
+safetensors==0.9.0rc1
+sentencepiece==0.2.2
+soundfile==0.14.0
+triton==3.6.0
+transformers==5.8.1

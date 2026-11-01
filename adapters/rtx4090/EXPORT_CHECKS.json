@@ -1,0 +1,22 @@
+{
+  "file_hashes_checked": 97,
+  "python_syntax_files": 90,
+  "launchers": {
+    "run_two_stage_8x4090.sh": {
+      "bash_syntax": "passed",
+      "cli_help": "passed"
+    },
+    "run_single_stage_8x4090.sh": {
+      "bash_syntax": "passed",
+      "cli_help": "passed"
+    },
+    "run_original_8x4090.sh": {
+      "bash_syntax": "passed",
+      "cli_help": "passed"
+    }
+  },
+  "cuda_execution": "not_run",
+  "contains_framework": false,
+  "contains_studies": false,
+  "contains_symlinks": false
+}

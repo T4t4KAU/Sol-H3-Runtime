@@ -1,0 +1,24 @@
+{
+  "scope": "External runtime sources required by two-stage inference; revisions reproduced from the original project README. Not downloaded in this export.",
+  "sources": [
+    {
+      "name": "Sana",
+      "url": "https://github.com/NVlabs/Sana.git",
+      "revision": "670482d8a857d578ac8a2ea89b052d0fb47badba",
+      "argument": "--sana-root"
+    },
+    {
+      "name": "LTX-2",
+      "url": "https://github.com/Lightricks/LTX-2.git",
+      "revision": "d151147788a9284cca791edc6ce898007e727fe6",
+      "argument": "--ltx-root"
+    },
+    {
+      "name": "h3-upscaler",
+      "url": "https://github.com/LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler.git",
+      "revision": "d7c01b9011f2e8439493f6c02c29995a27df276f",
+      "argument": "--upscaler-source",
+      "file": "nodes/minimax_h3_latent_upscaler_3d.py"
+    }
+  ]
+}

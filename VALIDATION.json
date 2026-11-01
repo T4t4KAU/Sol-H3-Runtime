@@ -1,0 +1,36 @@
+{
+  "status": "passed_cpu_packaging_checks",
+  "date": "2026-11-01",
+  "source_integrity": {
+    "status": "passed",
+    "files_verified": {
+      "official": 82,
+      "rtx4090": 100
+    },
+    "official_revision": "781e8341fb3b29d3aea5d50265772e9619340b66",
+    "cuda_executed": false
+  },
+  "python_syntax_files": 168,
+  "bash_syntax_files": 8,
+  "documentation_bash_blocks_checked": 10,
+  "launcher_integration_tests": {
+    "status": "passed",
+    "tests": 5,
+    "stdout": "",
+    "stderr": "test_4090_launch_policy_and_prompt_quoting (test_launchers.LauncherTests.test_4090_launch_policy_and_prompt_quoting) ... ok\ntest_adapted_help_has_no_cuda_dependency (test_launchers.LauncherTests.test_adapted_help_has_no_cuda_dependency) ... ok\ntest_default_entry_selects_official_implementation (test_launchers.LauncherTests.test_default_entry_selects_official_implementation) ... ok\ntest_gpu_precheck_failure_prevents_worker_dispatch (test_launchers.LauncherTests.test_gpu_precheck_failure_prevents_worker_dispatch) ... ok\ntest_official_dispatch_stays_in_official_tree (test_launchers.LauncherTests.test_official_dispatch_stays_in_official_tree) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.192s\n\nOK\n"
+  },
+  "relocated_package_five_entrypoints_and_source_verification": "passed",
+  "contains_symlinks": false,
+  "historical_gpu_support": {
+    "source": "adapters/rtx4090/EXPORT_MANIFEST.json and README.md",
+    "scope": "Reuse historically accepted8xRTX4090 complete-generation code byte-for-byte. Not a new GPU test."
+  },
+  "new_gpu_execution": "not_run",
+  "reason": "This task packages source. GPU allocation/credentials were not changed or requested.",
+  "source_comparison_counts": {
+    "unchanged": 66,
+    "changed": 10,
+    "adaptation_only": 24,
+    "official_only": 6
+  }
+}

@@ -1,0 +1,421 @@
+{
+  "created_date": "2026-10-26",
+  "scope": "Inference-only export; runtime and seven-step entry point are byte-identical to the measured frozen baseline. Supporting files have separate origin entries.",
+  "frozen_source": "/labdata2/hwx/sol-h3-8xrtx4090/native-four-20261024T052329Z",
+  "frozen_source_manifest_sha256": "ebbdced11a22537079a7eb46c2dfc1905a3c9d85731ccf00442a628f7e0623e7",
+  "git_commit": "cf2ecd925ac09c576c2fe2b72a67047f6363dda2",
+  "excluded": [
+    "AutoResearch framework and studies",
+    "static AdaLN owner experimental patches",
+    "four-option ablation INT8 transport adapter",
+    "private deployment and credentials",
+    "model weights, virtual environments and generated outputs"
+  ],
+  "files": {
+    "h3_runtime/__init__.py": {
+      "sha256": "e0775ab5fdd019f6882328b1072afa1c78f772953da30ad2d422f3cdb6d389f8",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/adaln.py": {
+      "sha256": "5ec544ddcb642419afcc883e98f762e4e17a027eb60cc7de893dd72192cea0fa",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/bsa_metadata.py": {
+      "sha256": "6ef294bb0c85fad03faea7b75b4789bf42eb7566a1ffdbc8757a0b4ca6610836",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/collective_profiling.py": {
+      "sha256": "20499add4ae3dfa354d5ca6d7ad0fd3d53e8258e2a930994798cc22009928104",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/comm_quant.py": {
+      "sha256": "c1beeb53a69edc7d7aa60d14862023fdecfdeb330736e5511514afea2d7c7c26",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/compute_quant.py": {
+      "sha256": "376dd27e0ba9d4c421bd6aaead404d4bf95b67f35b2fd3eea56b7ccb4222966c",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/cp_plan.py": {
+      "sha256": "b72cf2cb26bfe10bab372adc9d8ca7bbe0a4d04a707b8318383d98d4284f232b",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/distributed_loading.py": {
+      "sha256": "1ce472848fd987e2aedb72372f6d29369b2d314a048d04312b5943e591a22349",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/encoding.py": {
+      "sha256": "2ca8ed87647d4bf5b46c27eb12dc56e9b5a1e2edb29d84dfe3f4484d67ef1717",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/engine.py": {
+      "sha256": "f7b5e5861a8217d40e0da7ea3b0e4c8cc026f27e58e03a9e7dc33b6bcc8331f9",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/evidence.py": {
+      "sha256": "e4693495066d37f0856f7bc83357bb08a865ca35ef1cb3bcdf4c6630b8563c24",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/fsdp.py": {
+      "sha256": "b35676d0abb51dacef1751a056a38a7e6b61071b19106b555054e672b2a60e7e",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/fusion_install.py": {
+      "sha256": "380453decccebc470c8126ec51e038b6a8ac69000046d0f885910319815aa27b",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/fusions.py": {
+      "sha256": "7bf7c8bf0f5ac2d5419d107b8ddb243b97a01695216c99ac7296dd4b39bd52ff",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/linear_layout.py": {
+      "sha256": "aa4e634fb7c129adad9946218f63fe90ef5d4675280acf21d1f01b7dd7475b7d",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/lora.py": {
+      "sha256": "47d0893cdb61d47a378ba6f865cffe112da1665aa774641e3b460f286e20c4c5",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/lora_fusion.py": {
+      "sha256": "65fe7dde5aceccb96a6ad2674b28c865ad3dd78fb30901d71985e4813f038817",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/ltx_attention_policy.py": {
+      "sha256": "cc2d82c3e7e2a0e1ea867bb11f07cf6ecd68b187c80f959d01e91f6da865906c",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/ltx_cache.py": {
+      "sha256": "628650c32750bcf276446517b8911bba6697570a0cc48764acee5c7623f0b613",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/ltx_policy_guard.py": {
+      "sha256": "ff92c8a3abed376ecd303f5f3ff3d7f0a32ca7c9164230b6a95453ea0f54f846",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/ltx_sp.py": {
+      "sha256": "d1c053db3d43e1ee147e9244fbe9e816ed179427c9ad306deefdad56866256c3",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/mxfp8.py": {
+      "sha256": "5d6585bf7e329860cfc7f7734b1013b7600a6b553cc96e5513811ddcf086b4e6",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/parallel_hooks.py": {
+      "sha256": "12bc0f6e6a6f74cb6eeebe37efaed498cd908628dca34e3477eca2f3df5fc775",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/profiling.py": {
+      "sha256": "d7965a7e6fa9d4185d57e42c784afeabafe6515440f91bfd1a8a9e28c665bf5a",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/python_call_profiling.py": {
+      "sha256": "b0ec0d35388fa7936187af7a7e82cd8fc3e342aa97f01a3c2408cb320ce8d7f9",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/quant_kernels.py": {
+      "sha256": "347d8b3cc6e79e6eca7204da6b5035cbe7b1a3fe18adc776c7296053fb4ae151",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/relayout.py": {
+      "sha256": "bdd81d733cf1e91c548680057297906dcae506bf32a08be14b3073c0dc8ee208",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/request_profiling.py": {
+      "sha256": "f5b578a189603899e26be273afdc359509fe9fa116e81b170fabecf7153056c4",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/seven_step_output.py": {
+      "sha256": "2d5f520ac7f0f345763cd155f80e79c1c17355834bc083888fd8566bc7f996e2",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/seven_step_profiling.py": {
+      "sha256": "e8bceff11cb39bab75c4c5a7d768dda6de5f791d45855fd38a1c2c83aeaf0cb0",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/sol_residual.py": {
+      "sha256": "11793fa06821f929ddf53d3c42d99699fb3d968e3e83d84d645e4fab72aaa844",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/sparse_attention.py": {
+      "sha256": "1ce473e9095885f416b51f80e39482cb4196f9127e6fc172f3c80ceb0651fe2d",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/staged.py": {
+      "sha256": "d24f6dbba280a6b6f652983092feab7b95bbe81d8a862e3dd7d4fa42d52f5383",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/text_fsdp.py": {
+      "sha256": "782684be548e019b317674b8e321bee464208f0584073d00320b8eabaeda0e29",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/THIRD_PARTY_NOTICES.md": {
+      "sha256": "103d86cce2d458005c83713765880b0d48205faa4b7b20a774d36fc3df56da00",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/__init__.py": {
+      "sha256": "f8dd33b38c74a834b76fad7dbd8582d7f58a116fb33b98a01aabc241d20b4a15",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/__init__.py": {
+      "sha256": "eb3ec1ff32f5d2344a839acc90ee48329906532f560596f3ff733d4923553078",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/__init__.py": {
+      "sha256": "42edd3f7a999b03f052836071389179a2edbc0a239221b67a5c8da8d09d127d6",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/__init__.py": {
+      "sha256": "63631d004ed460922766940b7eeac674cbcd8a43eeb0e5595962845c862ca026",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/ampere_helpers.py": {
+      "sha256": "cadac170a7da379e27c36d044360480d710cfa88d082dad2b9decd58e4847111",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/block_info.py": {
+      "sha256": "d518a31b430b6a4aa6e925eb5171036b9984f77c9dca9840f4b32c1e2d60ccdb",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/block_sparsity.py": {
+      "sha256": "bb836711cbee9baed9db96987b301709f149fb72b8fb0842c69cabe327f989d0",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/cute_dsl_utils.py": {
+      "sha256": "162ba9671cb16d20fccf3547e43d606aa83e775329d5287bc9320569afe60137",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/fast_math.py": {
+      "sha256": "7e5f822bf4d0ba36967558f3ae9a1408b410cb726c31222cd61703569d1be738",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/flash_fwd.py": {
+      "sha256": "840e90f8e5d1fca2f73fbdb44df938027aa4750210af814fa28551f7a723ec27",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/mask.py": {
+      "sha256": "f920b98640efc91d737b631bb7ea223f71cd2b086ae3dae2d3db37a28fd390d2",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/named_barrier.py": {
+      "sha256": "98d1cf1f2254203769da8d566f5ddadc755fb1cb3f4e514012da3addb9233c09",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/pack_gqa.py": {
+      "sha256": "e55c56628c37334e4ec672f877018dc1fce89c4c30ede05c7515b08fb5596450",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/pipeline.py": {
+      "sha256": "849bce91c72be0a5c7458979e10c8290f45e05253a83600e30fb9540c61ed56a",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/seqlen_info.py": {
+      "sha256": "8a922e1217b54b5185d9c8d8f928f8836058a2f4b3bddded4c38460a2e39d60f",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/softmax.py": {
+      "sha256": "56ee749e3a388e0bb3f853fea0c236cf89f291d167f269f8b04d3bb2f31cc37a",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/tile_scheduler.py": {
+      "sha256": "ac0d1211e34d73c2bbb44b7f62b3a77d1f9aac177653a5a028cb4f5fa1b1ce0e",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/_vendor/flash_attn/cute/utils.py": {
+      "sha256": "26a7577a2fb4f4a21fd27910c229896c687d13bda60481cd196471190b9f1222",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/common/__init__.py": {
+      "sha256": "2d18d24871bacaaeb6417ee37f4e1b57530c6bf3f51e20ca803bad6a6e53c25b",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/common/layout_utils.py": {
+      "sha256": "d8ed2213f8162bf820eb9934ea3ec0b4b3038c7a73fe64d65bcf025639e63c0e",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/common/runtime.py": {
+      "sha256": "b6d19ddc6b0f6f1e4ddd48094133ee56d6c1ab383c57e7d02887318d53c264b4",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/common/selector.py": {
+      "sha256": "b75eab435ec873af383a61ca2f32eb3eb75fd3fec94c30302fbfe8149f9bb0a1",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/interface.py": {
+      "sha256": "1801195ca718a7d1d1af5b0fc5e2c779a8a142f6f541afebc38433784243351e",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/preprocess.py": {
+      "sha256": "d38c924280e00c34072652cfedf6fd65c85db6a4fe93e7858dd919e28d89d958",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm100/LICENSE.flash-attention": {
+      "sha256": "8c9ccb96c065e706135b6cbad279b721da6156e51f3a5f27c6b3329af9416d73",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm100/__init__.py": {
+      "sha256": "77a77ead8e28f2a388a77497297f6e9e9385cfe0e99a1f67e2036d41ef4c1c78",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm100/kernel.py": {
+      "sha256": "a614f29e002fdde2e9258da516b452d2ea07ecdeec8410722a344c72a40f61a0",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm100/mainloop.py": {
+      "sha256": "d684efc04ba01791c0c89df5902136f48081efc5bf84da1b087090f32e5cee4b",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm100/math.py": {
+      "sha256": "00974a22a4c5b5e47628f67a560dc966a50ef7225eb3f773a296d71b5ac5be7f",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm100/softmax.py": {
+      "sha256": "94a2cfd9e28cc1bbdc018fa26b7945f39be902344af56a5fe8d408dcb8310b31",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm100/tmem.py": {
+      "sha256": "e761576ab085c7f9c135421ed8e6f202fca5b3f96252a14ae99051e8685c00c8",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm120/__init__.py": {
+      "sha256": "193997e4e5925c7a8cabe0247068698bdab1bb7fab283d0857fc01bf9a2763c1",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm120/kernel.py": {
+      "sha256": "cba5a94506cb15025faf7065340d36eba8747cff5a0852816486213fbd7fb715",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm120/mainloop.py": {
+      "sha256": "8b6b87be7fe21cb0ebfbab34cd0ae819faa96b829c57c7b27c1c14c29e771570",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/__init__.py": {
+      "sha256": "dbb468f6dda2c220593e36cb8e1e753f4586e1ab47b7a6ba1e8f98e47dc3802e",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/_compat/__init__.py": {
+      "sha256": "dc9300ddffe0a8acd263d301c56b6c3094f0ddb3279be7917ace8e9cfbaf2586",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/_compat/activation.py": {
+      "sha256": "77b1c16a9970b2fe79de4a945db9930850dcf4f4869ed4639805337c6a40a07d",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/_compat/copy_utils.py": {
+      "sha256": "8e5e6fa9a79382995636ff1df391fdc37ed134cb5fa3d8f4db66213f476f5bd2",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/_compat/cute_dsl_utils.py": {
+      "sha256": "afffcb709248851cc14dc91da466e104271de4438dbca73c2ac7c1c6c061bae8",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/_compat/layout_utils.py": {
+      "sha256": "4ad6a7a87adf0bf8dc76c5aa04689d717ca63aeeaba5c754e9a96fb72787fa5a",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/_compat/sm90_utils.py": {
+      "sha256": "3c4bfd2cc468b372671e7654f6ae06cdf5f3b64b4f7f03cf6d4467c51b4829f2",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/atoms.py": {
+      "sha256": "bdabb2257d5384f901c8a8a4d0b3e9b8697fbe89b2f8d4f0fd3db28d21ba135a",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/exact.py": {
+      "sha256": "e44e3e72883f50f93d2112721d7d697e6041ba1f9f2079a27da73fd0030eff6e",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/fwd.py": {
+      "sha256": "87a961541fcf95a8b2bb5ef6d4df7fdf9f2345ca3e1089f99611050ca84e1ad9",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/kernel.py": {
+      "sha256": "fcc3980955a60cdbb93cc4d52187d58359fa99d7a9ec9f594fde2e50b5e497f5",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/mainloop.py": {
+      "sha256": "4cec571d97201d76d5f9fccd4a4919d83d82dfdcc77d7c68ad6514567fbe0da7",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/sm90/split_combine.py": {
+      "sha256": "be1f14997ed4bacb8bff1fb0f7979bda6424af1394661e07d692a2f2460101c3",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/triton_ref/__init__.py": {
+      "sha256": "7053365a47158cf36d0a244451b017cd2ff0402bbd19005b23a53cc12d866840",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/triton_ref/fwd.py": {
+      "sha256": "0eac9c5c6c0642545a4d5ac9a034f7ec302eb3b9de2051d122ecab26e3456de3",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/third_party/sol_attn/triton_ref/preprocess.py": {
+      "sha256": "c1aaa53b26ac9293f504f1d107814ed6c1924a9b671ebebfffc54ec83f743264",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/two_stage.py": {
+      "sha256": "53d61850bf5941a5a52d65a73f4e716a95de93eaffd6c7917c44c705286079dc",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/ulysses.py": {
+      "sha256": "bcc93611b12721073ed35454639d28b069a0f67cf6c80e8de466e9ca7c617b93",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/upstream.py": {
+      "sha256": "d586c113a4ec9662b56364e1ba46747634e5734a2cf754682905375c9d710868",
+      "origin": "frozen_baseline"
+    },
+    "h3_runtime/vae_parallel.py": {
+      "sha256": "e98b1a3b2191ddd9297f22a071ad05d4980a40f4240d94f9f3dcb592ff69d60d",
+      "origin": "frozen_baseline"
+    },
+    "infer.py": {
+      "sha256": "ad2268d412d34c4669b237008280e929399f11fd30cb83a4f85aaf4b3796382e",
+      "origin": "frozen_baseline"
+    },
+    "run_two_stage_8x4090.sh": {
+      "sha256": "40e4451ce69733590cfaa5a6b07583b39083575e51911de49e5ad8f07c3803ea",
+      "origin": "frozen_baseline"
+    },
+    "tools/seven_step_rank_launcher.py": {
+      "sha256": "f24872d754d10faa1c65d2dc50ccdd3c9fae2b1bb8589bb5b9cb7e825375aa8c",
+      "origin": "frozen_baseline"
+    },
+    "requirements.txt": {
+      "sha256": "be97df44be5bc7701db8e2c8bfe10af88a8d03333b3c5d9385733783d88010dd",
+      "origin": "local_supporting_file",
+      "source": "/home/hwx/Documents/codes/project_ai4ai_efficient_interactive_world/Sol-H3-8xRTX4090/requirements.txt"
+    },
+    "download_checkpoints.py": {
+      "sha256": "d37666ba002c3e30d5fde38cd1f5c39d863b1efc1c04ed0c45ef142527f6fa8e",
+      "origin": "local_supporting_file",
+      "source": "/home/hwx/Documents/codes/project_ai4ai_efficient_interactive_world/Sol-H3-8xRTX4090/download_checkpoints.py"
+    },
+    "run_single_stage_8x4090.sh": {
+      "sha256": "23542925ca8f3d5be0a1f4ec9d606212fbdd4de0f95b14e8f69cae2c6494cf24",
+      "origin": "local_supporting_file",
+      "source": "/home/hwx/Documents/codes/project_ai4ai_efficient_interactive_world/Sol-H3-8xRTX4090/run_single_stage_8x4090.sh"
+    },
+    "run_original_8x4090.sh": {
+      "sha256": "561b6fe8d47921c4b0b18d9fd6c6b896c591768b80ddb882d799c2098f7e1454",
+      "origin": "local_supporting_file",
+      "source": "/home/hwx/Documents/codes/project_ai4ai_efficient_interactive_world/Sol-H3-8xRTX4090/run_original_8x4090.sh"
+    },
+    "UPSTREAM_SOURCE_SNAPSHOT.json": {
+      "sha256": "4a5462b0aeef7b4402b10e7f70a97a89c21da419fe07bb340174471d17605ec7",
+      "origin": "local_supporting_file",
+      "source": "/home/hwx/Documents/codes/project_ai4ai_efficient_interactive_world/Sol-H3-8xRTX4090/SOURCE_SNAPSHOT.json"
+    },
+    "README.md": {
+      "sha256": "ef6f1f66556594bb4669f7791b7644ba550461bed1d6a247773bb30655c58b99",
+      "origin": "export_documentation"
+    },
+    ".gitignore": {
+      "sha256": "cb55dd33ec2b50315030773ac2024df26f74d14199da56a1115824b5cda3d776",
+      "origin": "export_documentation"
+    },
+    "external_sources.json": {
+      "sha256": "6fd52cd011f77a77f98e548f0dcfa9065d19357a62dfd55430b78ebb91e3f16a",
+      "origin": "export_documentation"
+    }
+  }
+}

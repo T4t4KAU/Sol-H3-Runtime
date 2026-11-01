@@ -41,7 +41,7 @@ python3 tools/verify_sources.py
 
 ## 可选适配：RTX4090 24 GiB
 
-我们额外支持 **8 张 RTX4090 24 GiB**，使用独立脚本选择适配实现：
+我们额外支持 **8 张 RTX4090 24 GiB**，使用独立脚本选择适配实现；启动时自动检查依赖、权重和设备，检查通过后运行：
 
 ```bash
 export SOL_H3_PYTHON=/Datasets/public_models/SOL-H3/envs/solh3-4090/bin/python

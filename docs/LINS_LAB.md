@@ -1,4 +1,4 @@
-# SOL-H3：LINs Lab 部署与推理
+# SOL-H3 部署与推理
 
 更新日期：2026-11-01。仓库：[T4t4KAU/Sol-H3-Runtime](https://github.com/T4t4KAU/Sol-H3-Runtime)。以下从已经取得 GPU、进入服务器终端开始。
 
@@ -30,12 +30,10 @@ CUDA 应为 `True`，可见 GPU 数量应与分配的资源一致。`/Datasets/p
 
 ```bash
 git clone https://github.com/T4t4KAU/Sol-H3-Runtime.git "$SOL_H3_WORK/repo"
-git -C "$SOL_H3_WORK/repo" checkout 03fd1ab7d0b90000a3bfb4027f4bfc4c71ef8c0d
 cd "$SOL_H3_WORK/repo"
-"$SOL_H3_PYTHON" tools/verify_sources.py
 ```
 
-已有仓库时跳过克隆，进入对应目录并核对版本；保留已有改动。上述提交是本指南固定使用的运行代码版本。
+已有仓库时跳过克隆，保留本地改动，并更新到最新 `main` 分支。
 
 ## 3. 选择运行入口
 
@@ -49,15 +47,13 @@ export SOL_H3_OFFICIAL_GPUS=1
 
 这里的 `1` 是示例值。显存必须满足官方运行要求；多卡数量本身不保证模型能够装下。下文示例显式使用 `dense` 后端进行基础运行；其他后端按官方支持情况选择。
 
-**仅当使用 8×RTX4090 24 GiB 适配时**，把入口改为以下配置，并运行对应预检：
+**仅当使用 8×RTX4090 24 GiB 适配时**，把入口改为以下配置：
 
 ```bash
 export SOL_H3_ENTRY=run_8x4090.sh
-"$SOL_H3_PYTHON" tools/preflight_4090.py \
-  --model "$SOL_H3_MODEL" --adapter "$SOL_H3_ADAPTER" --gpu
 ```
 
-两种入口选择一种。启动脚本会管理进程，无需额外套一层 `torchrun`。
+两种入口选择一种。4090 适配脚本会自动检查权重、依赖和 GPU，检查通过后启动推理，失败则退出并显示原因。无需单独运行预检，也无需额外套一层 `torchrun`。
 
 ## 4. 启动推理并查看日志
 

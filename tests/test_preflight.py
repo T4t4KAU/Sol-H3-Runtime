@@ -14,21 +14,27 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PreflightTests(unittest.TestCase):
-    def run_check(self, index_name):
+    def run_check(self, index_name, launcher=False):
         spec = importlib.util.spec_from_file_location("preflight_under_test", ROOT / "tools/preflight_4090.py")
         module = importlib.util.module_from_spec(spec)
         with patch.dict(sys.modules, {"verify_sources": types.SimpleNamespace(verify=lambda root: {"status": "passed"})}):
             spec.loader.exec_module(module)
         with tempfile.TemporaryDirectory() as directory:
-            model = Path(directory) / "model"
+            model = Path(directory) / "MiniMax-H3"
             for component in ["transformer", "text_encoder", "tokenizer", "processor", "scheduler", "audio_scheduler", "vae", "audio_vae"]:
                 (model / component).mkdir(parents=True)
             if index_name:
                 (model / index_name).write_text("{}")
-            adapter = Path(directory) / "adapter.safetensors"
+            adapter = Path(directory) / "FastH3/dense-datafree/adapter_model.safetensors"
+            adapter.parent.mkdir(parents=True)
             adapter.touch()
+            argv = ["preflight", "--model", str(model), "--adapter", str(adapter)]
+            if launcher:
+                argv = ["preflight", "--launcher-args", "--checkpoints", directory,
+                        "--prompt", "A dancer with spaces and $ symbols.",
+                        "--output", str(Path(directory) / "video.mp4")]
             output = io.StringIO()
-            with patch.object(sys, "argv", ["preflight", "--model", str(model), "--adapter", str(adapter)]), patch.object(module.importlib.metadata, "version", return_value="2.11.0"), redirect_stdout(output):
+            with patch.object(sys, "argv", argv), patch.object(module.importlib.metadata, "version", return_value="2.11.0"), redirect_stdout(output):
                 code = module.main()
             return code, json.loads(output.getvalue())
 
@@ -37,6 +43,10 @@ class PreflightTests(unittest.TestCase):
             with self.subTest(name=name):
                 code, result = self.run_check(name)
                 self.assertEqual(code, 0, result["errors"])
+
+    def test_launcher_preserves_checkpoint_root_discovery(self):
+        code, result = self.run_check("modular_model_index.json", launcher=True)
+        self.assertEqual(code, 0, result["errors"])
 
     def test_missing_model_index_is_rejected(self):
         code, result = self.run_check(None)

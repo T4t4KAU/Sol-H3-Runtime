@@ -16,6 +16,10 @@ class LauncherTests(unittest.TestCase):
         interpreter.write_text(
             "#!/usr/bin/env python3\n"
             "import json,os,sys\n"
+            "if len(sys.argv)>1 and sys.argv[1].endswith('/tools/preflight_4090.py'):\n"
+            " with open(os.environ['TEST_COMMAND_FILE']+'.preflight','w') as f:\n"
+            "  json.dump(sys.argv[2:],f)\n"
+            " sys.exit(int(os.environ.get('TEST_PREFLIGHT_EXIT','0')))\n"
             "if sys.argv[1:]==['-']:\n"
             " sys.stdin.read()\n"
             " sys.exit(int(os.environ.get('TEST_GPU_CHECK_EXIT','0')))\n"
@@ -43,6 +47,10 @@ class LauncherTests(unittest.TestCase):
                 cwd=directory, env=env, capture_output=True, text=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
+            preflight = json.loads(Path(str(output) + ".preflight").read_text())
+            self.assertEqual(preflight[:2], ["--gpu", "--launcher-args"])
+            self.assertEqual(preflight[preflight.index("--prompt") + 1], prompt)
+            self.assertEqual(preflight[preflight.index("--model") + 1], "/models/H3")
             record = json.loads(output.read_text())
             args = record["args"]
             self.assertEqual(args[:3], ["-m", "torch.distributed.run", "--standalone"])
@@ -56,6 +64,19 @@ class LauncherTests(unittest.TestCase):
                 self.assertIn(option, args)
             self.assertEqual(args[args.index("--prompt") + 1], prompt)
             self.assertEqual(record["env"]["HF_HUB_OFFLINE"], "1")
+
+    def test_asset_preflight_failure_prevents_worker_dispatch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output, env = self.recorder(Path(directory))
+            env["TEST_PREFLIGHT_EXIT"] = "9"
+            result = subprocess.run(
+                ["bash", str(ROOT / "run_8x4090.sh"), "--model=/models/H3",
+                 "--adapter=/models/adapter.safetensors"],
+                cwd=directory, env=env, capture_output=True,
+            )
+            self.assertEqual(result.returncode, 9)
+            self.assertTrue(Path(str(output) + ".preflight").exists())
+            self.assertFalse(output.exists())
 
     def test_gpu_precheck_failure_prevents_worker_dispatch(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -15,12 +15,26 @@ from verify_sources import verify
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", type=Path, required=True)
-    parser.add_argument("--adapter", type=Path, required=True)
+    parser.add_argument("--model", type=Path)
+    parser.add_argument("--adapter", type=Path)
     parser.add_argument("--gpu", action="store_true", help="Run CUDA checks on the allocated GPU server")
+    parser.add_argument("--launcher-args", nargs=argparse.REMAINDER,
+                        help=argparse.SUPPRESS)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    result = {"source_integrity": verify(root), "errors": [], "warnings": []}
+    source_integrity = verify(root)
+    if args.launcher_args is not None:
+        # Reuse the frozen CLI to preserve path discovery and argument handling.
+        spec = importlib.util.spec_from_file_location(
+            "sol_h3_adapter_cli", root / "adapters/rtx4090/infer.py")
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        launch = cli.parse_args(["--no-adaln-precompute", *args.launcher_args,
+                                 "--mode", "single-stage"])
+        args.model, args.adapter = launch.model, launch.adapter
+    if args.model is None or args.adapter is None:
+        parser.error("Provide --model and --adapter")
+    result = {"source_integrity": source_integrity, "errors": [], "warnings": []}
     errors = result["errors"]
     model = args.model.expanduser().resolve()
     adapter = args.adapter.expanduser().resolve()

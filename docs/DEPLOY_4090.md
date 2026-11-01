@@ -79,14 +79,9 @@ unset HF_HUB_OFFLINE TRANSFORMERS_OFFLINE
 
 若已有目录名为 `MiniMax-H3-Diffusers`、`FastH3`，直接在 `--model`、`--adapter` 中使用实际路径，无需改名。
 
-## 4 预检与生成
+## 4 运行生成
 
 ```bash
-"$SOL_H3_PYTHON" tools/preflight_4090.py \
-  --model "$SOL_H3_ASSETS/MiniMax-H3" \
-  --adapter "$SOL_H3_ASSETS/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors" \
-  --gpu
-
 export SOL_H3_OUTPUTS=/path/to/outputs
 mkdir -p "$SOL_H3_OUTPUTS"
 ./run_8x4090.sh \
@@ -97,7 +92,7 @@ mkdir -p "$SOL_H3_OUTPUTS"
   --output "$SOL_H3_OUTPUTS/fasth3.mp4"
 ```
 
-预检只检查依赖、目录和设备，不加载模型。完成生成并检查 MP4 的音视频流后，才算本机部署运行成功。
+运行脚本自动检查源码、依赖、权重目录和设备；检查失败会退出，通过后才启动模型。完成生成并检查 MP4 的音视频流后，才算本机部署运行成功。
 
 ```bash
 ffprobe -v error \

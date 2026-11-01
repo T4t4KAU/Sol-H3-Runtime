@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-01",
+  "basis": "Recorded GPU identities and deployment receipts, not a live resource-availability query.",
+  "profiles": [
+    {
+      "id": "lins_rtx4090_24g_8gpu",
+      "entry": "scripts/run_lins_rtx4090_24g_8gpu.sh",
+      "config": "configs/lins_rtx4090_24g_8gpu.env",
+      "gpu": "NVIDIA GeForce RTX 4090",
+      "memory_class_gib": 24,
+      "gpu_count": 8,
+      "recorded_resource_pool": "64c128t_512_4090",
+      "capability": "SM89",
+      "fsdp_degree": 8,
+      "sp_degree": 8,
+      "basis": "Frozen complete-generation deployment; standalone source preserved in adapters/rtx4090.",
+      "shared_copy_full_gpu_generation": "not_retested"
+    }
+  ],
+  "other_observed_configurations": [
+    {
+      "gpu": "RTX4090 24 GiB",
+      "gpu_counts": [
+        2,
+        4
+      ],
+      "evidence": "native-fullopt-4090-20261031T030218Z and native-fullopt-g4-4090-20261031T045649Z",
+      "scope": "DiT-only profiling with CPU offload and cached text conditioning; not complete-generation deployment support.",
+      "complete_generation_entry": null
+    },
+    {
+      "gpu": "RTX4090 48 GiB",
+      "gpu_counts": [
+        1
+      ],
+      "recorded_resource_pool": "128c256t_768_4090_48",
+      "evidence": "node08-single-20261026T151723Z/run-evidence.json",
+      "scope": "Completed 50-step generation on another runtime, not the standalone four-forward SOL-H3 packaged here.",
+      "complete_generation_entry": null
+    }
+  ]
+}

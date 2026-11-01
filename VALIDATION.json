@@ -11,13 +11,13 @@
     "cuda_executed": false
   },
   "python_syntax_files": 169,
-  "bash_syntax_files": 8,
-  "documentation_bash_blocks_checked": 16,
+  "bash_syntax_files": 9,
+  "documentation_bash_blocks_checked": 15,
   "launcher_integration_tests": {
     "status": "passed",
-    "tests": 9,
+    "tests": 11,
     "stdout": "",
-    "stderr": "test_4090_launch_policy_and_prompt_quoting (test_launchers.LauncherTests.test_4090_launch_policy_and_prompt_quoting) ... ok\ntest_adapted_help_has_no_cuda_dependency (test_launchers.LauncherTests.test_adapted_help_has_no_cuda_dependency) ... ok\ntest_asset_preflight_failure_prevents_worker_dispatch (test_launchers.LauncherTests.test_asset_preflight_failure_prevents_worker_dispatch) ... ok\ntest_default_entry_selects_official_implementation (test_launchers.LauncherTests.test_default_entry_selects_official_implementation) ... ok\ntest_gpu_precheck_failure_prevents_worker_dispatch (test_launchers.LauncherTests.test_gpu_precheck_failure_prevents_worker_dispatch) ... ok\ntest_official_dispatch_stays_in_official_tree (test_launchers.LauncherTests.test_official_dispatch_stays_in_official_tree) ... ok\ntest_launcher_preserves_checkpoint_root_discovery (test_preflight.PreflightTests.test_launcher_preserves_checkpoint_root_discovery) ... ok\ntest_missing_model_index_is_rejected (test_preflight.PreflightTests.test_missing_model_index_is_rejected) ... ok\ntest_modular_and_standard_model_indexes_are_accepted (test_preflight.PreflightTests.test_modular_and_standard_model_indexes_are_accepted) ... ok\n\n----------------------------------------------------------------------\nRan 9 tests in 0.256s\n\nOK\n"
+    "stderr": "test_4090_launch_policy_and_prompt_quoting (test_launchers.LauncherTests.test_4090_launch_policy_and_prompt_quoting) ... ok\ntest_4090_profile_keeps_automatic_asset_check_and_eight_workers (test_launchers.LauncherTests.test_4090_profile_keeps_automatic_asset_check_and_eight_workers) ... ok\ntest_adapted_help_has_no_cuda_dependency (test_launchers.LauncherTests.test_adapted_help_has_no_cuda_dependency) ... ok\ntest_asset_preflight_failure_prevents_worker_dispatch (test_launchers.LauncherTests.test_asset_preflight_failure_prevents_worker_dispatch) ... ok\ntest_default_entry_selects_official_implementation (test_launchers.LauncherTests.test_default_entry_selects_official_implementation) ... ok\ntest_gpu_precheck_failure_prevents_worker_dispatch (test_launchers.LauncherTests.test_gpu_precheck_failure_prevents_worker_dispatch) ... ok\ntest_official_dispatch_stays_in_official_tree (test_launchers.LauncherTests.test_official_dispatch_stays_in_official_tree) ... ok\ntest_server_profile_help_does_not_require_torch (test_launchers.LauncherTests.test_server_profile_help_does_not_require_torch) ... ok\ntest_launcher_preserves_checkpoint_root_discovery (test_preflight.PreflightTests.test_launcher_preserves_checkpoint_root_discovery) ... ok\ntest_missing_model_index_is_rejected (test_preflight.PreflightTests.test_missing_model_index_is_rejected) ... ok\ntest_modular_and_standard_model_indexes_are_accepted (test_preflight.PreflightTests.test_modular_and_standard_model_indexes_are_accepted) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.342s\n\nOK\n"
   },
   "relocated_package_five_entrypoints_and_source_verification": "passed",
   "contains_symlinks": false,
@@ -34,9 +34,9 @@
     "official_only": 6
   },
   "lins_lab_guide": {
-    "bash_syntax_blocks_checked": 6,
+    "bash_syntax_blocks_checked": 5,
     "runtime_branch": "main",
-    "scope": "Official entry with configurable GPU count; optional 4090 adapter automatically checks startup conditions."
+    "basis": "Actual server hardware and deployment records; unvalidated official-count templates are not advertised as server profiles."
   },
   "official_cli_shared_environment": {
     "status": "passed",
@@ -47,5 +47,14 @@
   "automatic_4090_preflight": {
     "status": "passed_cpu_checks",
     "scope": "Preflight success dispatches workers; failure blocks workers; help bypasses preflight; checkpoint-root discovery preserved. No GPU inference executed."
+  },
+  "relocated_server_profile_and_integration_tests": "passed",
+  "server_profile": {
+    "entry": "scripts/run_lins_rtx4090_24g_8gpu.sh",
+    "config": "configs/lins_rtx4090_24g_8gpu.env",
+    "gpu_count": 8,
+    "gpu_model": "RTX4090 24 GiB",
+    "new_gpu_generation": "not_run",
+    "live_resource_inventory": "unavailable: scheduler returned HTTP 401 during 2026-11-01 check"
   }
 }

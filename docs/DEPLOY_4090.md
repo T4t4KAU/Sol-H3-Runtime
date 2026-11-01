@@ -1,6 +1,6 @@
 # 可选适配：在 8×RTX4090 24 GiB 上部署
 
-本包默认使用官方实现。仅需适配这套显存受限硬件时，使用本文的独立 Bash 入口 `run_8x4090.sh`。
+本包默认使用官方实现。仅需适配这套显存受限硬件时，使用本文的独立 Bash 入口 `scripts/run_lins_rtx4090_24g_8gpu.sh`。
 
 ## 1 复制代码并进入 GPU 环境
 
@@ -84,7 +84,7 @@ unset HF_HUB_OFFLINE TRANSFORMERS_OFFLINE
 ```bash
 export SOL_H3_OUTPUTS=/path/to/outputs
 mkdir -p "$SOL_H3_OUTPUTS"
-./run_8x4090.sh \
+./scripts/run_lins_rtx4090_24g_8gpu.sh \
   --model "$SOL_H3_ASSETS/MiniMax-H3" \
   --adapter "$SOL_H3_ASSETS/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors" \
   --task t2v --duration 5 --seed 0 \
@@ -107,7 +107,7 @@ ffprobe -v error \
 | 现象 | 处理 |
 |---|---|
 | 要求八张可见卡 | 检查 allocation、可见设备和使用的入口；不要再套 `torchrun` |
-| 加载了官方目录但发生 OOM | 八卡 24 GiB 使用根目录 `run_8x4090.sh`，它选择 FSDP 适配实现 |
+| 加载了官方目录但发生 OOM | 八卡 24 GiB 使用根目录 `scripts/run_lins_rtx4090_24g_8gpu.sh`，它选择 FSDP 适配实现 |
 | 缺少 tokenizer / VAE / 文本编码器 | 提供完整模型目录，不能只传 DiT 权重目录 |
 | 模型路径无法自动识别 | 显式传 `--model` 和 `--adapter`，避免同一根目录下多个别名产生歧义 |
 | 导入到错误版本的 torch 或 diffusers | 使用 `SOL_H3_PYTHON` 指定目标环境，检查实际解释器与包路径 |

@@ -13,7 +13,7 @@ Arguments: --model DIR --adapter FILE --task t2v --duration 5 --prompt TEXT --ou
 Optional upstream arguments: --attention-backend dense|sol|sol_bsa --compute-quant none|mxfp8
 Use official/Sol-H3/infer.py --help in the official Python environment for all options.
 This is the resident upstream entry; SP does not provide FSDP weight sharding.
-For eight RTX4090 24GiB GPUs, use ./run_8x4090.sh.
+Server-specific deployment configurations are listed in docs/LINS_LAB.md.
 USAGE
         exit 0
     fi

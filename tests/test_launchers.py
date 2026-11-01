@@ -117,6 +117,33 @@ class LauncherTests(unittest.TestCase):
             self.assertEqual(Path(args[0]), ROOT / "official/Sol-H3/infer.py")
             self.assertEqual(args[1:], ["--attention-backend", "dense"])
 
+    def test_4090_profile_keeps_automatic_asset_check_and_eight_workers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output, env = self.recorder(Path(directory))
+            env["SOL_H3_FSDP_DEGREE"] = "1"
+            result = subprocess.run(
+                ["bash", str(ROOT / "scripts/run_lins_rtx4090_24g_8gpu.sh"),
+                 "--model", "/models/H3", "--adapter", "/models/adapter.safetensors"],
+                cwd=directory, env=env, capture_output=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(Path(str(output) + ".preflight").exists())
+            args = json.loads(output.read_text())["args"]
+            self.assertIn("--nproc-per-node=8", args)
+            self.assertEqual(Path(args[4]), ROOT / "adapters/rtx4090/infer.py")
+            self.assertEqual(args[args.index("--fsdp-degree") + 1], "8")
+
+    def test_server_profile_help_does_not_require_torch(self):
+        env = dict(os.environ, SOL_H3_PYTHON=sys.executable,
+                   SOL_H3_OFFICIAL_PYTHON=sys.executable)
+        scripts = ["scripts/run_lins_rtx4090_24g_8gpu.sh"]
+        for script in scripts:
+            with self.subTest(script=script):
+                result = subprocess.run(["bash", str(ROOT / script), "--help"],
+                                        cwd="/tmp", env=env, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("--model", result.stdout)
+
     def test_adapted_help_has_no_cuda_dependency(self):
         env = dict(os.environ, SOL_H3_PYTHON=sys.executable)
         for script in ["run_8x4090.sh", "run_original_8x4090.sh", "run_two_stage_8x4090.sh"]:

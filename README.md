@@ -7,6 +7,12 @@
 
 LINs Lab 的运行步骤见 [部署与推理指南](docs/LINS_LAB.md)，从取得 GPU 后开始。
 
+## LINs Lab 服务器配置
+
+现有完整生成部署对应 `scripts/run_lins_rtx4090_24g_8gpu.sh`，配置文件为 `configs/lins_rtx4090_24g_8gpu.env`。它来自 RTX4090 24 GiB 八卡的冻结部署记录，使用公共环境与权重，并自动检查设备和启动条件。
+
+其他已观察到的服务器配置及其验证范围记录在 `configs/lins_lab_support.json`。官方源码支持的进程数不等同于这些服务器已完成验证的部署配置。
+
 ## 官方实现：默认使用
 
 环境安装、权重下载、任务和硬件要求以 [官方 README](official/Sol-H3/README.md) 为准。根目录 `requirements.txt` 引用官方依赖；PyTorch 按官方要求先行安装。
@@ -35,7 +41,7 @@ python3 tools/verify_sources.py
   --output /path/to/output.mp4
 ```
 
-`run.sh` 通过 `run_official.sh` 调用原样官方 `infer.py`，保留其默认优化配置。GPU 数量可设为 `1/2/4/8`，默认 8；单 GPU 需显式添加 `--attention-backend dense`。多卡使用官方 Ulysses 路线，所需显存和算子支持取决于设备；SP 本身不分片模型权重。
+`run.sh` 通过 `run_official.sh` 调用原样官方 `infer.py`。GPU 数量可设置为 1/2/4/8，单 GPU 需要 `--attention-backend dense`。这保留官方使用方式，不代表所有这些配置都已在 LINs Lab 服务器通过完整生成验证。多卡使用官方 Ulysses 路线，所需显存和算子支持取决于设备；SP 本身不分片模型权重。
 
 启动脚本会处理进程启动，无需再套一层 `torchrun`。其他官方参数原样透传。运行 `./run.sh --help` 查看包装器说明，完整参数见官方 `infer.py --help`。
 
@@ -46,7 +52,7 @@ python3 tools/verify_sources.py
 ```bash
 export SOL_H3_PYTHON=/Datasets/public_models/SOL-H3/envs/solh3-4090/bin/python
 export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
-./run_8x4090.sh \
+./scripts/run_lins_rtx4090_24g_8gpu.sh \
   --model "$SOL_H3_ASSETS/MiniMax-H3" \
   --adapter "$SOL_H3_ASSETS/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors" \
   --task t2v --duration 5 --seed 0 \
@@ -66,6 +72,8 @@ export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
 official/Sol-H3/          完整、原样官方实现和第三方声明
 run.sh                   默认官方入口
 run_official.sh          官方进程启动包装器
+scripts/                 按服务器部署记录整理的启动脚本
+configs/                 服务器配置与支持范围记录
 requirements.txt         官方依赖入口
 adapters/rtx4090/         可选的冻结硬件适配实现
 run_8x4090.sh             可选：8×RTX4090 24 GiB 单阶段推理

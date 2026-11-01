@@ -2,7 +2,7 @@
 
 更新日期：2026-11-01。仓库：[T4t4KAU/Sol-H3-Runtime](https://github.com/T4t4KAU/Sol-H3-Runtime)。以下从已经取得 GPU、进入服务器终端开始。
 
-官方入口支持按资源配置使用 1、2、4 或 8 张 GPU，仍需满足官方显存和算子要求。8×RTX4090 24 GiB 是额外支持的一种适配场景，见第 3 节。
+以下配置依据 LINs Lab 的设备记录和已有生成记录整理。实际可用资源以分配到的 GPU 为准。
 
 ## 1. 设置环境和路径
 
@@ -16,15 +16,9 @@ export SOL_H3_MODEL="$SOL_H3_ASSETS/MiniMax-H3"
 export SOL_H3_ADAPTER="$SOL_H3_ASSETS/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors"
 export SOL_H3_OUTPUT="$SOL_H3_WORK/outputs/video.mp4"
 mkdir -p "$SOL_H3_WORK/outputs" "$SOL_H3_WORK/logs"
-
-nvidia-smi
-test -x "$SOL_H3_PYTHON"
-test -d "$SOL_H3_MODEL"
-test -r "$SOL_H3_ADAPTER"
-"$SOL_H3_PYTHON" -c 'import torch; print("PyTorch:", torch.__version__); print("CUDA:", torch.cuda.is_available()); print("Visible GPUs:", torch.cuda.device_count())'
 ```
 
-CUDA 应为 `True`，可见 GPU 数量应与分配的资源一致。`/Datasets/public_models/SOL-H3` 整个目录需在当前环境中可见。共享环境使用 Python 3.13.9、PyTorch 2.11.0+cu128；不匹配目标设备时，按 [官方安装说明](https://github.com/T4t4KAU/Sol-H3-Runtime/blob/main/official/Sol-H3/README.md#setup) 准备环境并替换 `SOL_H3_PYTHON`。
+`/Datasets/public_models/SOL-H3` 整个目录需在当前环境中可见。共享环境使用 Python 3.13.9、PyTorch 2.11.0+cu128；不匹配目标设备时，按 [官方安装说明](https://github.com/T4t4KAU/Sol-H3-Runtime/blob/main/official/Sol-H3/README.md#setup) 准备环境并替换 `SOL_H3_PYTHON`。
 
 ## 2. 获取代码
 
@@ -35,25 +29,21 @@ cd "$SOL_H3_WORK/repo"
 
 已有仓库时跳过克隆，保留本地改动，并更新到最新 `main` 分支。
 
-## 3. 选择运行入口
+## 3. 使用对应的服务器配置
 
-一般情况使用官方入口，GPU 数量按实际资源改为 `1`、`2`、`4` 或 `8`：
+| 服务器配置 | 本仓库的完整推理入口 |
+|---|---|
+| RTX4090 24 GiB，8 卡 | `scripts/run_lins_rtx4090_24g_8gpu.sh` |
+| RTX4090 24 GiB，2 / 4 卡 | 独立引擎现有记录仅覆盖 DiT 阶段，尚未提供完整生成入口 |
+| RTX4090 48 GiB，1 卡 | 既有生成记录属于另一条推理路线，尚未整理进本仓库 |
 
-```bash
-export SOL_H3_ENTRY=run.sh
-export SOL_H3_OFFICIAL_PYTHON="$SOL_H3_PYTHON"
-export SOL_H3_OFFICIAL_GPUS=1
-```
-
-这里的 `1` 是示例值。显存必须满足官方运行要求；多卡数量本身不保证模型能够装下。下文示例显式使用 `dense` 后端进行基础运行；其他后端按官方支持情况选择。
-
-**仅当使用 8×RTX4090 24 GiB 适配时**，把入口改为以下配置：
+对表中已有完整推理入口的配置，设置相应脚本：
 
 ```bash
-export SOL_H3_ENTRY=run_8x4090.sh
+export SOL_H3_ENTRY=scripts/run_lins_rtx4090_24g_8gpu.sh
 ```
 
-两种入口选择一种。4090 适配脚本会自动检查权重、依赖和 GPU，检查通过后启动推理，失败则退出并显示原因。无需单独运行预检，也无需额外套一层 `torchrun`。
+脚本读取对应服务器配置，自动检查权重、环境和 GPU，再启动推理。无需单独运行预检或设置进程数。其他配置需要完成对应适配与验证后再提供脚本。
 
 ## 4. 启动推理并查看日志
 
@@ -64,7 +54,6 @@ cd "$SOL_H3_WORK/repo"
 nohup bash "$SOL_H3_ENTRY" \
   --model "$SOL_H3_MODEL" \
   --adapter "$SOL_H3_ADAPTER" \
-  --attention-backend dense \
   --task t2v --duration 5 --seed 0 \
   --prompt 'An adult dancer performs energetic choreography on a brightly lit stage.' \
   --output "$SOL_H3_OUTPUT" \

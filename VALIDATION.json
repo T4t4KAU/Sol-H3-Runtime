@@ -32,5 +32,16 @@
     "changed": 10,
     "adaptation_only": 24,
     "official_only": 6
+  },
+  "lins_lab_guide": {
+    "bash_syntax_blocks_checked": 6,
+    "runtime_revision": "03fd1ab7d0b90000a3bfb4027f4bfc4c71ef8c0d",
+    "scope": "Generic official entry with configurable GPU count; optional 8xRTX4090 24GiB adapter. No new GPU inference validation."
+  },
+  "official_cli_shared_environment": {
+    "status": "passed",
+    "interpreter": "/Datasets/public_models/SOL-H3/envs/solh3-4090/bin/python",
+    "check": "official/Sol-H3/infer.py --help",
+    "gpu_execution": false
   }
 }

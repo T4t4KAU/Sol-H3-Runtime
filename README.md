@@ -4,6 +4,9 @@
 
 官方源码固定于 `781e8341fb3b29d3aea5d50265772e9619340b66`；82 个文件均与上游 Git blob 一致。适配代码使用已有完整生成验证的冻结版本。模型权重、Python 环境和生成结果另行准备。LINs Lab 的权重统一使用 `/Datasets/public_models/SOL-H3/`；代码、环境与输出仍各自存放。
 
+
+LINs Lab 的运行步骤见 [部署与推理指南](docs/LINS_LAB.md)，从取得 GPU 后开始。
+
 ## 官方实现：默认使用
 
 环境安装、权重下载、任务和硬件要求以 [官方 README](official/Sol-H3/README.md) 为准。根目录 `requirements.txt` 引用官方依赖；PyTorch 按官方要求先行安装。

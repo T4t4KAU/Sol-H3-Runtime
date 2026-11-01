@@ -1,9 +1,9 @@
 {
   ".gitignore": "8977eb5db568776cd69e2c7053c5a622f5a3ca7914efb4c13d9a347004146511",
   "NOTICE.md": "4e747dc960d88a29028318a9d8aba8eb03df98f690a337d12726e6bfffa942e8",
-  "README.md": "1bad8bf0e6115e2441665e0f3dee67764d81fb9d6f6ebd8fc79a9d7dad7e7f68",
+  "README.md": "0c400e9c2ba6d1c8b6dfa3e7abb6f0fc827505c96045b5d8b2d9b5bb07f10d7f",
   "SOURCES.json": "09ba8f53b4d8be2c2ed58fabb740fe4ddf0e96f13a1b163ef13cae7abf4b5854",
-  "VALIDATION.json": "b17b83d1b301060de3f7d44ccc9dd8b4bf49aceea2de0b7dd7c4aba3b0610c2c",
+  "VALIDATION.json": "7fa8ff1fb0dd9a50d3f2012741f2aee4c1d49c736b26f633d185fe47a7fb3cc9",
   "adapters/rtx4090/.gitignore": "cb55dd33ec2b50315030773ac2024df26f74d14199da56a1115824b5cda3d776",
   "adapters/rtx4090/EXPORT_CHECKS.json": "4a85cc245ad61096b81a16a862355d3db2db28bfb5075ece165eab4e7a356be8",
   "adapters/rtx4090/EXPORT_MANIFEST.json": "ceb5a8ccd8130d4be5139f654f5fa0c0276fd8bf718af92542ad7cc5abf8bbcd",
@@ -107,9 +107,9 @@
   "adapters/rtx4090/run_two_stage_8x4090.sh": "40e4451ce69733590cfaa5a6b07583b39083575e51911de49e5ad8f07c3803ea",
   "adapters/rtx4090/tools/seven_step_rank_launcher.py": "f24872d754d10faa1c65d2dc50ccdd3c9fae2b1bb8589bb5b9cb7e825375aa8c",
   "docs/ADAPTATION.md": "1a35531eaf9171a3a757521968fe7b06f359b24fd99333b92c305a9609ff8ea0",
-  "docs/DEPLOY_4090.md": "b2c331cbdc81b3e81ea7780fb85c2a1d67253cfe454bce756f8ac3d52532409f",
+  "docs/DEPLOY_4090.md": "73b3f9915a973f528d3dcbb5ac2ebc052736537a7b330dcf266068b3f822391c",
   "docs/source-comparison.json": "e8fdd221969d4ddf14789ef9f09ff4c5193fb00ac953b0a75ddb613aa2971015",
-  "examples/4090.env.example": "7bc2acfe108ff93c6b83561f168244da39b9bf896affc2facf17ded1b2dd3cfa",
+  "examples/4090.env.example": "359fec2a44d3d48dc124d07b150c0993d38ff68f191840eb5e0e70e349ccd7c0",
   "official/Sol-H3/.gitignore": "054a8bbc23fa1548b1a766d23f1659b6d00585f957672a564e776ccf2c2505e2",
   "official/Sol-H3/LORA_FUSION.md": "6f07e5c954b6327ff00ee7a9a12a5f39c1c0ac4ec6c388a6f5f85af539b9df2b",
   "official/Sol-H3/README.md": "163dfd23a7c3154e85fac36945f889839edf34399cef652d34d4ba67d8aad754",
@@ -200,6 +200,7 @@
   "run_original_8x4090.sh": "97ee95991dc642b1da09f0d81e34fb2721e42559da13c6df4b3f0248384fc820",
   "run_two_stage_8x4090.sh": "bb4997dcc73a250ed69ee8e4b40527bd2c9f58bd9da9521bd5bc9a73b5ae92e6",
   "tests/test_launchers.py": "5b1fdbc7382307fd8248aae46b385a26e0c7e6d3c21ac9797068e45286eea9b1",
-  "tools/preflight_4090.py": "33631453a421fd265f2d2b14c0dba6f79f0f565638989e2de11e12bcb99f526c",
+  "tests/test_preflight.py": "9aca25765da768ee28d2cebfd16262bc318488956dd0313a96d404345df4891d",
+  "tools/preflight_4090.py": "9ac5233a44d89ebfb59ecec4feae30edfebbd20e7d1a57950a5b8c8bac6cd4b4",
   "tools/verify_sources.py": "c5f060bb3a8f3b0b72d48f3264f7338ee3314ce5ee225a684585722074e021c3"
 }

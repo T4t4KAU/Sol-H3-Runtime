@@ -48,21 +48,21 @@ export SOL_H3_PYTHON=/path/to/sol-h3-4090-env/bin/python
 
 ## 3 准备权重
 
-只运行单阶段 FastH3，需要完整 MiniMax-H3 模型及 dense-datafree adapter：
+只运行单阶段 FastH3，需要完整 MiniMax-H3 模型及 dense-datafree adapter。LINs Lab 统一放在 `/Datasets/public_models/SOL-H3/`；已有完整权重时直接复用，缺少时下载：
 
 ```bash
-export SOL_H3_ASSETS=/path/to/checkpoints
+export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
+mkdir -p "$SOL_H3_ASSETS"
 unset HF_HUB_OFFLINE TRANSFORMERS_OFFLINE
-hf auth login
 "$SOL_H3_PYTHON" official/Sol-H3/download_checkpoints.py --output-dir "$SOL_H3_ASSETS"
 ```
 
-先在 Hugging Face 接受模型条款。已有有效快照时直接复用；下载脚本不固定模型 revision，精确复现应使用已有模型快照与文件哈希。
+下载前需已具备模型访问权限。共享目录需对使用者可读，并在 GPU 容器中可见。已有有效快照时直接复用；下载脚本不固定模型 revision，精确复现应使用已有模型快照与文件哈希。
 
 ```text
-checkpoints/
+/Datasets/public_models/SOL-H3/
   MiniMax-H3/
-    model_index.json
+    modular_model_index.json    # 或 model_index.json
     transformer/
     text_encoder/
     tokenizer/

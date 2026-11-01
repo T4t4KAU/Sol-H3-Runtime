@@ -24,9 +24,11 @@ def main() -> int:
     errors = result["errors"]
     model = args.model.expanduser().resolve()
     adapter = args.adapter.expanduser().resolve()
-    required = ["model_index.json", "transformer", "text_encoder", "tokenizer",
+    required = ["transformer", "text_encoder", "tokenizer",
                 "processor", "scheduler", "audio_scheduler", "vae", "audio_vae"]
     missing = [name for name in required if not (model / name).exists()]
+    if not any((model / name).is_file() for name in ("model_index.json", "modular_model_index.json")):
+        missing.append("model_index.json or modular_model_index.json")
     if missing:
         errors.append({"missing_model_components": missing, "model": str(model)})
     if not adapter.is_file():

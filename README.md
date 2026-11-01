@@ -2,7 +2,7 @@
 
 基于 NVlabs/Sana 的官方 SOL-H3 独立推理引擎，保留完整官方实现，以官方代码作为默认入口。**额外提供 8×RTX4090 24 GiB 的可选适配**，通过单独的 Bash 脚本调用。
 
-官方源码固定于 `781e8341fb3b29d3aea5d50265772e9619340b66`；82 个文件均与上游 Git blob 一致。适配代码使用已有完整生成验证的冻结版本。模型权重、Python 环境和生成结果另行准备。
+官方源码固定于 `781e8341fb3b29d3aea5d50265772e9619340b66`；82 个文件均与上游 Git blob 一致。适配代码使用已有完整生成验证的冻结版本。模型权重、Python 环境和生成结果另行准备。LINs Lab 的权重统一使用 `/Datasets/public_models/SOL-H3/`；代码、环境与输出仍各自存放。
 
 ## 官方实现：默认使用
 
@@ -21,11 +21,12 @@ cd Sol-H3-Runtime
 cd /path/to/Sol-H3-Runtime
 export SOL_H3_OFFICIAL_PYTHON=/path/to/official-env/bin/python
 export SOL_H3_OFFICIAL_GPUS=8
+export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
 
 python3 tools/verify_sources.py
 ./run.sh \
-  --model /path/to/MiniMax-H3 \
-  --adapter /path/to/adapter_model.safetensors \
+  --model "$SOL_H3_ASSETS/MiniMax-H3" \
+  --adapter "$SOL_H3_ASSETS/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors" \
   --task t2v --duration 5 \
   --prompt 'An adult dancer performs on a stage.' \
   --output /path/to/output.mp4
@@ -41,9 +42,10 @@ python3 tools/verify_sources.py
 
 ```bash
 export SOL_H3_PYTHON=/path/to/sol-h3-4090-env/bin/python
+export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
 ./run_8x4090.sh \
-  --model /path/to/MiniMax-H3 \
-  --adapter /path/to/adapter_model.safetensors \
+  --model "$SOL_H3_ASSETS/MiniMax-H3" \
+  --adapter "$SOL_H3_ASSETS/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors" \
   --task t2v --duration 5 --seed 0 \
   --prompt 'An adult dancer performs on a stage.' \
   --output /path/to/output-4090.mp4

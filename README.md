@@ -41,7 +41,7 @@ python3 tools/verify_sources.py
 我们额外支持 **8 张 RTX4090 24 GiB**，使用独立脚本选择适配实现：
 
 ```bash
-export SOL_H3_PYTHON=/path/to/sol-h3-4090-env/bin/python
+export SOL_H3_PYTHON=/Datasets/public_models/SOL-H3/envs/solh3-4090/bin/python
 export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
 ./run_8x4090.sh \
   --model "$SOL_H3_ASSETS/MiniMax-H3" \
@@ -51,7 +51,7 @@ export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
   --output /path/to/output-4090.mp4
 ```
 
-该入口采用 FSDP8、SP8、分阶段加载及 tiled VAE，使用 FastH3 四次 DiT 前向，输出完整视频和音频。五秒 T2V 为 1344×768、124 帧、24 FPS。依赖安装及权重、设备预检见 [4090 适配部署说明](docs/DEPLOY_4090.md)，依赖入口是 `requirements-4090.txt`。
+该入口采用 FSDP8、SP8、分阶段加载及 tiled VAE，使用 FastH3 四次 DiT 前向，输出完整视频和音频。五秒 T2V 为 1344×768、124 帧、24 FPS。LINs Lab 的适配环境也统一放在上述公共目录的 `envs/solh3-4090/`。依赖安装及权重、设备预检见 [4090 适配部署说明](docs/DEPLOY_4090.md)，依赖入口是 `requirements-4090.txt`。
 
 适配入口保留已验证的 dense Flash SDPA、混合参数类型和 eager VAE 配置；未默认开启稀疏注意力、AdaLN 预计算、packed SP、原生 kernel fusions、量化计算/通信或 parallel VAE。它是显存适配配置，其性能不能代表官方全优化配置。
 

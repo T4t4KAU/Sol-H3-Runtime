@@ -25,12 +25,14 @@ python3 tools/verify_sources.py
 
 ## 2 配置 Python 环境
 
-优先复用已验证的 Linux、Python 3.13.9、PyTorch 2.11.0+cu128 环境，显式指定其解释器：
+LINs Lab 已有共享推理环境位于公共模型目录中，显式指定其解释器：
 
 ```bash
-export SOL_H3_PYTHON=/path/to/sol-h3-4090-env/bin/python
+export SOL_H3_PYTHON=/Datasets/public_models/SOL-H3/envs/solh3-4090/bin/python
 "$SOL_H3_PYTHON" -c 'import torch,diffusers,transformers; print(torch.__version__,diffusers.__version__,transformers.__version__)'
 ```
+
+该共享环境同时携带公共 CPython 基础运行时，整个 `/Datasets/public_models/SOL-H3/` 需在 GPU 容器内以相同路径可见。使用者可直接运行；依赖变更另建自己的环境。
 
 需要新建环境时，在代码目录运行：
 

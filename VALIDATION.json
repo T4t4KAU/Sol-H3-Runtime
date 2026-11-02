@@ -37,7 +37,9 @@
     "bash_syntax_blocks_checked": 5,
     "runtime_branch": "main",
     "basis": "Actual server hardware and deployment records; unvalidated official-count templates are not advertised as server profiles.",
-    "code_transfer": "Upload local repository or extracted ZIP; server-side git clone not required."
+    "code_transfer": "Upload local repository or extracted ZIP; server-side git clone not required.",
+    "finalized_date": "2026-11-02",
+    "documented_media_check": "Passed by executing the exact guide Python snippet on the existing generated video; no new GPU generation."
   },
   "official_cli_shared_environment": {
     "status": "passed",

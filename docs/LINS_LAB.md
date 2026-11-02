@@ -1,8 +1,8 @@
 # SOL-H3 部署与推理
 
-更新日期：2026-11-01。仓库：[T4t4KAU/Sol-H3-Runtime](https://github.com/T4t4KAU/Sol-H3-Runtime)。以下从已经取得 GPU、进入服务器终端开始。
+更新日期：2026-11-02。仓库：[T4t4KAU/Sol-H3-Runtime](https://github.com/T4t4KAU/Sol-H3-Runtime)。以下从已经取得 GPU、进入服务器终端开始。
 
-以下配置依据 LINs Lab 的设备记录和已有生成记录整理。实际可用资源以分配到的 GPU 为准。
+本指南示例使用 FastH3 四步权重，生成约 5 秒、带音频的视频。服务器配置依据 LINs Lab 的设备记录与完整生成验证整理，实际配置以分配到的 GPU 为准。
 
 ## 1. 设置环境和路径
 
@@ -70,17 +70,30 @@ tail -f "$SOL_H3_WORK/logs/inference.log"
 
 ## 5. 检查结果
 
-生成结束后执行，确认文件存在且同时包含视频和音频：
+生成结束后执行，确认文件存在，并完整解码检查视频和音频：
 
 ```bash
 ls -lh "$SOL_H3_OUTPUT"
-"$SOL_H3_PYTHON" -c 'import av,sys; c=av.open(sys.argv[1]); assert c.streams.video and c.streams.audio; print("PASS: video and audio streams found"); c.close()' "$SOL_H3_OUTPUT"
+"$SOL_H3_PYTHON" - "$SOL_H3_OUTPUT" <<'PY'
+import av
+import sys
+
+with av.open(sys.argv[1]) as media:
+    assert media.streams.video and media.streams.audio, "Missing video or audio stream"
+    stream = media.streams.video[0]
+    width, height, fps = stream.width, stream.height, stream.average_rate
+    video_frames = sum(1 for _ in media.decode(video=0))
+with av.open(sys.argv[1]) as media:
+    audio_frames = sum(1 for _ in media.decode(audio=0))
+assert video_frames > 0 and audio_frames > 0, "Empty video or audio"
+print(f"PASS: {width}x{height}, {fps} FPS, {video_frames} video frames, {audio_frames} audio frames")
+PY
 ```
 
 视频路径为 `$HOME/sol-h3-runtime-deploy/outputs/video.mp4`，修改工作目录时以 `SOL_H3_OUTPUT` 为准。
 
 目录不可访问时先确认公共目录在当前环境可见；运行报错时查看 `$SOL_H3_WORK/logs/inference.log`。不要向共享环境直接安装或升级依赖。
 
-## 当前验证状态
+## 验证记录
 
 2026-11-02 已按本文流程完成端到端验证：从本机上传源码，使用公共环境和权重，在 `128c256t_768_4090` 资源池的 8×RTX4090 24 GiB 上生成视频。输出为 1344×768、124 帧、24 FPS，视频与音频均完整解码通过。此次使用 768 GiB 主机内存，未重新验证 512 GiB 节点。其他硬件配置仍以各自验证记录为准。

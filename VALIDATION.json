@@ -91,5 +91,24 @@
       "Isolated persistent work directory",
       "Same GPU model/count in pool 128c256t_768_4090 (768 GiB RAM), instead of original full 512 GiB pool"
     ]
+  },
+  "api_service": {
+    "status": "passed_cpu_http_and_queue_tests",
+    "entry": "tools/serve_api.py",
+    "dependency_policy": "Python standard library only; no modification to shared model environment",
+    "tests": 4,
+    "total_integration_tests": 15,
+    "documentation_bash_blocks_checked": 6,
+    "scope": [
+      "HTTP auth and input validation",
+      "FIFO serialization and capacity limit",
+      "Status/log queries and video download",
+      "Literal prompt handling without shell evaluation",
+      "Failure persistence and single-instance lock",
+      "Restart queue recovery",
+      "Graceful shutdown terminates active job and preserves pending requests"
+    ],
+    "real_gpu_request": "not_run; underlying launch script has separate full-GPU validation",
+    "model_lifetime": "New inference process and model load per job; no resident-model reuse"
   }
 }

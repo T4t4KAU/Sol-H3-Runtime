@@ -7,6 +7,8 @@
 
 LINs Lab 的运行步骤见 [部署与推理指南](docs/LINS_LAB.md)，从取得 GPU 后开始。
 
+需要通过 HTTP 提交任务时，见 [API 服务部署](docs/API.md)。服务提供串行请求队列、状态查询和视频下载，复用现有启动脚本。
+
 ## LINs Lab 服务器配置
 
 现有完整生成部署对应 `scripts/run_lins_rtx4090_24g_8gpu.sh`，配置文件为 `configs/lins_rtx4090_24g_8gpu.env`。它来自 RTX4090 24 GiB 八卡的冻结部署记录，使用公共环境与权重，并自动检查设备和启动条件。

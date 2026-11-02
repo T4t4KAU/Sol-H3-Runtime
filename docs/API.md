@@ -1,6 +1,6 @@
 # SOL-H3 API 服务
 
-API 复用仓库现有推理脚本，支持提交生成任务、查询状态、查看日志和下载视频。请求按 FIFO 顺序排队，同一服务一次执行一个任务，每个任务使用启动脚本对应的整组 GPU。
+在 GPU 服务器上运行 `serve.sh` 即可启动 HTTP 推理服务。服务接收生成请求、按 FIFO 顺序排队执行，提供状态查询、日志和视频下载。一次执行一个任务，每个任务使用对应推理入口的整组 GPU。以下命令均在服务器的 GPU 环境内执行。
 
 当前版本每个任务都会重新加载模型，耗时包含加载、生成和编码。它提供异步服务接口；模型常驻与跨请求复用尚未实现。
 
@@ -19,7 +19,7 @@ cd "$SOL_H3_WORK/repo"
 export SOL_H3_API_KEY="$("$SOL_H3_PYTHON" -c 'import secrets; print(secrets.token_urlsafe(32))')"
 export SOL_H3_API_DATA="$SOL_H3_WORK/api-data"
 
-nohup "$SOL_H3_PYTHON" tools/serve_api.py \
+nohup bash serve.sh \
   --host 127.0.0.1 --port 8000 \
   --entry "$SOL_H3_ENTRY" \
   --model "$SOL_H3_MODEL" \
@@ -32,14 +32,14 @@ echo $! > "$SOL_H3_WORK/logs/api.pid"
 
 `--capacity 16` 表示最多接收 16 个尚未结束的任务，包含正在运行的一个任务。超过容量时返回 HTTP 429。请保留 `SOL_H3_API_KEY`，后续请求使用相同值；它不会被写入任务记录。
 
-默认仅监听本机。需要其他机器访问时，将监听地址改为 `0.0.0.0`，并确保 GPU 环境的端口可达；该模式必须设置 `SOL_H3_API_KEY`。跨公网访问应通过提供 HTTPS 的反向代理转发。
+默认监听 GPU 服务器（或 GPU 容器）的 `127.0.0.1:8000`。需要监听服务器其他网卡时，将地址改为 `0.0.0.0`；该模式必须设置 `SOL_H3_API_KEY`。容器的端口发布方式由服务器运行环境决定，不影响 API 的启动方式。
 
 ```bash
 export SOL_H3_API_URL=http://127.0.0.1:8000
 curl -fsS "$SOL_H3_API_URL/health"
 ```
 
-`/health` 只表示 API 进程可响应。任务启动时仍会执行推理脚本自带的环境、权重和 GPU 检查。
+上面的健康检查也在 GPU 服务器内执行。`/health` 表示 API 进程可响应；任务启动时仍会执行推理脚本自带的环境、权重和 GPU 检查。
 
 ## 3. 提交任务
 

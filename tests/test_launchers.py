@@ -154,6 +154,18 @@ class LauncherTests(unittest.TestCase):
                 self.assertIn("--model", result.stdout)
                 self.assertIn("--output", result.stdout)
 
+    def test_api_entry_runs_server_with_unchanged_arguments(self):
+        with tempfile.TemporaryDirectory(prefix="sol h3 api ") as directory:
+            output, env = self.recorder(Path(directory))
+            env["SOL_H3_API_PYTHON"] = env["SOL_H3_PYTHON"]
+            args = ["--entry", str(ROOT / "scripts/run_lins_rtx4090_24g_8gpu.sh"),
+                    "--host", "127.0.0.1", "--port", "8000", "--data-dir", "/service data"]
+            result = subprocess.run(["bash", str(ROOT / "serve.sh")] + args,
+                                    cwd=directory, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(output.read_text())["args"],
+                             [str(ROOT / "tools/serve_api.py")] + args)
+
 
 if __name__ == "__main__":
     unittest.main()

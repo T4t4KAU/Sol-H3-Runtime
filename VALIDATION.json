@@ -97,7 +97,7 @@
     "entry": "tools/serve_api.py",
     "dependency_policy": "Python standard library only; no modification to shared model environment",
     "tests": 4,
-    "total_integration_tests": 15,
+    "total_integration_tests": 16,
     "documentation_bash_blocks_checked": 6,
     "scope": [
       "HTTP auth and input validation",
@@ -122,6 +122,8 @@
     },
     "video_sha256": "3ecda5f4a83e176d1e0967b93e726a9c8f44d9bd755ed068326ba91685bbb6b2",
     "job_wall_s": 366.17168521881104,
-    "timing_scope": "Job wall includes launch checks, model loading, generation and encoding; excludes GPU scheduling wait and request queue wait; not DiT-only."
+    "timing_scope": "Job wall includes launch checks, model loading, generation and encoding; excludes GPU scheduling wait and request queue wait; not DiT-only.",
+    "server_entry": "serve.sh",
+    "server_entry_argument_preservation": "passed"
   }
 }

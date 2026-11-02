@@ -7,7 +7,7 @@
 
 LINs Lab 的运行步骤见 [部署与推理指南](docs/LINS_LAB.md)，从取得 GPU 后开始。
 
-需要通过 HTTP 提交任务时，见 [API 服务部署](docs/API.md)。服务提供串行请求队列、状态查询和视频下载，复用现有启动脚本。
+在 GPU 服务器运行 `bash serve.sh` 可启动 HTTP 推理服务，按实际配置设置 `--entry`、`--model` 和 `--adapter`。服务提供请求排队、状态查询和视频下载，完整步骤见 [API 服务部署](docs/API.md)。
 
 ## LINs Lab 服务器配置
 

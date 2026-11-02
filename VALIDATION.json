@@ -34,12 +34,22 @@
     "official_only": 6
   },
   "lins_lab_guide": {
-    "bash_syntax_blocks_checked": 5,
+    "bash_syntax_blocks_checked": 12,
     "runtime_branch": "main",
     "basis": "Actual server hardware and deployment records; unvalidated official-count templates are not advertised as server profiles.",
     "code_transfer": "Upload local repository or extracted ZIP; server-side git clone not required.",
     "finalized_date": "2026-11-02",
-    "documented_media_check": "Passed by executing the exact guide Python snippet on the existing generated video; no new GPU generation."
+    "documented_media_check": "Passed by executing the exact guide Python snippet on the existing generated video; no new GPU generation.",
+    "includes_server_api_start_and_usage": true,
+    "api_entry": "serve.sh",
+    "api_sections": [
+      "start",
+      "submit",
+      "status and log",
+      "download and decode",
+      "stop and resume"
+    ],
+    "scope": "Documentation syntax and existing real-GPU API smoke-test evidence; no repeated GPU generation for documentation edit."
   },
   "official_cli_shared_environment": {
     "status": "passed",

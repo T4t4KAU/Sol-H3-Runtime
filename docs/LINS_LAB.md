@@ -38,8 +38,6 @@ test -f scripts/run_lins_rtx4090_24g_8gpu.sh
 | 服务器配置 | 本仓库的完整推理入口 |
 |---|---|
 | RTX4090 24 GiB，8 卡 | `scripts/run_lins_rtx4090_24g_8gpu.sh` |
-| RTX4090 24 GiB，2 / 4 卡 | 独立引擎现有记录仅覆盖 DiT 阶段，尚未提供完整生成入口 |
-| RTX4090 48 GiB，1 卡 | 既有生成记录属于另一条推理路线，尚未整理进本仓库 |
 
 对表中已有完整推理入口的配置，设置相应脚本：
 
@@ -94,6 +92,112 @@ PY
 
 目录不可访问时先确认公共目录在当前环境可见；运行报错时查看 `$SOL_H3_WORK/logs/inference.log`。不要向共享环境直接安装或升级依赖。
 
-## 验证记录
+## 6. 启动和使用 API 服务
 
-2026-11-02 已按本文流程完成端到端验证：从本机上传源码，使用公共环境和权重，在 `128c256t_768_4090` 资源池的 8×RTX4090 24 GiB 上生成视频。输出为 1344×768、124 帧、24 FPS，视频与音频均完整解码通过。此次使用 768 GiB 主机内存，未重新验证 512 GiB 节点。其他硬件配置仍以各自验证记录为准。
+以下命令均在 GPU 服务器／容器内执行。API 与第 4 节的单次生成使用同一套环境、权重和服务器配置；完成第 1–3 节后，可以直接选择 API 方式运行。
+
+服务接收请求后按顺序生成视频，一次执行一个任务。当前 API 进程常驻，每个任务会重新加载模型。无需安装额外的 API 依赖。
+
+### 6.1 启动服务
+
+在同一个终端中执行。首次启动会生成密钥，后续启动复用同一个密钥文件：
+
+```bash
+cd "$SOL_H3_WORK/repo"
+test -f serve.sh
+export SOL_H3_API_DATA="$SOL_H3_WORK/api-data"
+export SOL_H3_API_URL=http://127.0.0.1:8000
+
+if [ ! -s "$SOL_H3_WORK/api.key" ]; then
+  (umask 077; "$SOL_H3_PYTHON" -c 'import secrets; print(secrets.token_urlsafe(32))' > "$SOL_H3_WORK/api.key")
+fi
+export SOL_H3_API_KEY="$(cat "$SOL_H3_WORK/api.key")"
+
+nohup bash serve.sh \
+  --host 127.0.0.1 --port 8000 \
+  --entry "$SOL_H3_ENTRY" \
+  --model "$SOL_H3_MODEL" \
+  --adapter "$SOL_H3_ADAPTER" \
+  --data-dir "$SOL_H3_API_DATA" \
+  --capacity 16 \
+  > "$SOL_H3_WORK/logs/api.log" 2>&1 < /dev/null &
+echo $! > "$SOL_H3_WORK/logs/api.pid"
+```
+
+服务监听当前 GPU 环境的 `127.0.0.1:8000`。`--capacity 16` 表示最多接收 16 个尚未结束的任务，包含正在运行的任务；队列满时返回 HTTP 429。不要在同一组 GPU 上同时运行第 4 节的命令和 API 推理，或重复启动多个服务实例。
+
+需要监听服务器其他网卡时，将 `--host` 改为 `0.0.0.0`，保留密钥设置；容器端口的发布方式按服务器运行环境配置。
+
+查看服务日志和健康状态：
+
+```bash
+tail -n 50 "$SOL_H3_WORK/logs/api.log"
+curl -fsS "$SOL_H3_API_URL/health"
+```
+
+服务启动需要短暂等待；连接失败时先查看日志，再重试健康检查。正常返回包含 `"status": "ok"`。这表示 API 可响应，权重和 GPU 检查会在任务启动时由推理脚本自动执行。
+
+### 6.2 提交生成任务
+
+```bash
+JOB_JSON=$(curl -fsS "$SOL_H3_API_URL/v1/jobs" \
+  -H "Authorization: Bearer $SOL_H3_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"An adult dancer performs energetic choreography on a brightly lit stage.","duration":5,"seed":0}')
+printf '%s\n' "$JOB_JSON"
+JOB_ID=$(printf '%s' "$JOB_JSON" | "$SOL_H3_PYTHON" -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+```
+
+成功提交返回 HTTP 202 和任务 ID，生成在后台进行。将 JSON 中的 `prompt` 替换为自己的提示词。
+
+| 参数 | 说明 |
+|---|---|
+| `prompt` | 必填，1–4000 个字符 |
+| `duration` | 当前 API 只开放 5 秒，默认 `5` |
+| `seed` | 0–2147483647 的整数，默认 `0` |
+
+### 6.3 查询状态和日志
+
+```bash
+curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID" \
+  -H "Authorization: Bearer $SOL_H3_API_KEY"
+
+curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/log" \
+  -H "Authorization: Bearer $SOL_H3_API_KEY"
+```
+
+任务依次处于 `queued`（排队）、`running`（生成中），最终为 `completed`（完成）或 `failed`（失败）。重复查询状态，等到 `completed` 后再下载。失败时查看返回的 `error` 和任务日志；日志接口返回最后 64 KiB，完整日志保存在 `$SOL_H3_API_DATA/$JOB_ID/inference.log`。
+
+### 6.4 下载和检查视频
+
+任务完成后执行：
+
+```bash
+export SOL_H3_OUTPUT="$SOL_H3_WORK/outputs/$JOB_ID.mp4"
+curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/video" \
+  -H "Authorization: Bearer $SOL_H3_API_KEY" \
+  -o "$SOL_H3_OUTPUT"
+ls -lh "$SOL_H3_OUTPUT"
+```
+
+视频下载到服务器的 `$SOL_H3_WORK/outputs/`。此时可直接复用第 5 节的解码命令检查结果。生成尚未完成时，下载接口返回 HTTP 409。
+
+每个任务的元数据、原始视频和完整日志均保存在 `$SOL_H3_API_DATA/$JOB_ID/`，不同任务的输出相互独立。
+
+### 6.5 停止和恢复服务
+
+```bash
+kill -TERM "$(cat "$SOL_H3_WORK/logs/api.pid")"
+```
+
+停止服务会终止当前推理，未开始的任务仍保存在队列中。重新执行第 6.1 节，使用相同的数据目录、权重配置和密钥文件后，排队任务会继续执行；被中断的任务标记为 `failed`，需要重新提交。
+
+换一个服务器终端使用已运行的服务时，先重新执行第 1、3 节的环境变量设置，再执行：
+
+```bash
+export SOL_H3_API_DATA="$SOL_H3_WORK/api-data"
+export SOL_H3_API_URL=http://127.0.0.1:8000
+export SOL_H3_API_KEY="$(cat "$SOL_H3_WORK/api.key")"
+```
+
+随后使用已有的任务 ID 查询或下载，不要再次执行启动命令。GPU 分配结束或容器退出时，服务也会停止，`nohup` 不会延长 GPU 分配。

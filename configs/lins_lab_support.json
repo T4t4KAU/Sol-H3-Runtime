@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-01",
+  "date": "2026-11-02",
   "basis": "Recorded GPU identities and deployment receipts, not a live resource-availability query.",
   "profiles": [
     {
@@ -14,7 +14,10 @@
       "fsdp_degree": 8,
       "sp_degree": 8,
       "basis": "Frozen complete-generation deployment; standalone source preserved in adapters/rtx4090.",
-      "shared_copy_full_gpu_generation": "not_retested"
+      "shared_copy_full_gpu_generation": "passed_video_and_audio_full_decode",
+      "tested_resource_pool": "128c256t_768_4090",
+      "tested_host_memory_gib": 768,
+      "validation_run_id": "guide-e2e-verify-20261101T180517Z"
     }
   ],
   "other_observed_configurations": [

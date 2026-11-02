@@ -1,6 +1,6 @@
 {
-  "status": "passed_cpu_packaging_checks",
-  "date": "2026-11-01",
+  "status": "passed_packaging_and_shared_assets_full_gpu_generation",
+  "date": "2026-11-02",
   "source_integrity": {
     "status": "passed",
     "files_verified": {
@@ -25,8 +25,8 @@
     "source": "adapters/rtx4090/EXPORT_MANIFEST.json and README.md",
     "scope": "Reuse historically accepted8xRTX4090 complete-generation code byte-for-byte. Not a new GPU test."
   },
-  "new_gpu_execution": "not_run",
-  "reason": "This task packages source. GPU allocation/credentials were not changed or requested.",
+  "new_gpu_execution": "passed_complete_generation",
+  "reason": "User-authorized deployment-guide validation using local source upload and public assets.",
   "source_comparison_counts": {
     "unchanged": 66,
     "changed": 10,
@@ -55,7 +55,39 @@
     "config": "configs/lins_rtx4090_24g_8gpu.env",
     "gpu_count": 8,
     "gpu_model": "RTX4090 24 GiB",
-    "new_gpu_generation": "not_run",
-    "live_resource_inventory": "unavailable: scheduler returned HTTP 401 during 2026-11-01 check"
+    "new_gpu_generation": "passed_video_and_audio_full_decode",
+    "live_resource_inventory": "Queried successfully 2026-11-02; own eight-GPU allocation in 128c256t_768_4090",
+    "tested_resource_pool": "128c256t_768_4090",
+    "host_memory_gib": 768
+  },
+  "full_gpu_validation": {
+    "run_id": "guide-e2e-verify-20261101T180517Z",
+    "source_commit": "e7b55d35ddfa7d7589d9baf13ebdfcab36d8b520",
+    "resource_pool": "128c256t_768_4090",
+    "gpu_count": 8,
+    "gpu_model": "RTX4090 24 GiB",
+    "pipeline_elapsed_s": 529.319,
+    "media_encoding_s": 2.749,
+    "launch_and_initial_check_wall_s": 566.7250580787659,
+    "timing_scope": "Pipeline timing from inference log; launch wall time includes checks, loading, generation, encoding and original media check; not DiT-only.",
+    "video_bytes": 3887398,
+    "video_sha256": "3ecda5f4a83e176d1e0967b93e726a9c8f44d9bd755ed068326ba91685bbb6b2",
+    "media": {
+      "width": 1344,
+      "height": 768,
+      "fps": "24",
+      "fps_numerator": 24,
+      "fps_denominator": 1,
+      "container_duration_s": 5.258344,
+      "video_frames_decoded": 124,
+      "audio_frames_decoded": 163
+    },
+    "quality_scope": "Video/audio streams and full decode; no visual quality comparison.",
+    "verification_correction": "Original validator compared fps strings 24/1 and 24. Revalidated existing output with numeric rational comparison; did not rerun GPU generation.",
+    "deviations_from_guide": [
+      "Source uploaded from local machine",
+      "Isolated persistent work directory",
+      "Same GPU model/count in pool 128c256t_768_4090 (768 GiB RAM), instead of original full 512 GiB pool"
+    ]
   }
 }

@@ -90,4 +90,4 @@ VALIDATION.json          本次代码整理的检查记录
 
 ## 验证范围
 
-本次检查源码身份、Python/Bash 语法、官方与适配启动器的参数传递和目录迁移。结果见 `VALIDATION.json`。八卡适配的完整生成支持来自冻结版本的既有验证；本次整理未重新执行 GPU 推理。
+本次检查源码身份、Python/Bash 语法、官方与适配启动器的参数传递和目录迁移。结果见 `VALIDATION.json`。2026-11-02 已从独立目录使用公共环境和权重，在 8×RTX4090 24 GiB（768 GiB 主机内存）上完成四步视频生成和视频/音频完整解码验证。验证范围与记录见 `docs/LINS_LAB.md` 和 `VALIDATION.json`。

@@ -6,7 +6,7 @@
 
 ## 1. 准备环境
 
-先完成 [LINs Lab 部署指南](LINS_LAB.md) 第 1–3 节，在已取得 GPU 的环境中准备代码、公共权重、公共 Python 环境，并设置 `SOL_H3_WORK`、`SOL_H3_PYTHON`、`SOL_H3_MODEL`、`SOL_H3_ADAPTER` 和 `SOL_H3_ENTRY`。
+先完成 [LINs Lab 部署指南](LINS_LAB.md) 第 1–2 节，在已取得 GPU 的环境中准备代码、公共权重、公共 Python 环境，并设置 `SOL_H3_WORK`、`SOL_H3_PYTHON`、`SOL_H3_MODEL`、`SOL_H3_ADAPTER` 和 `SOL_H3_ENTRY`。
 
 API 使用 Python 标准库，无需向公共环境安装额外依赖。下述命令沿用已验证的服务器入口；其他配置通过 `--entry` 选择相应启动脚本，默认入口为仓库的官方 `run.sh`。
 
@@ -72,7 +72,7 @@ curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/log" \
   -H "Authorization: Bearer $SOL_H3_API_KEY"
 ```
 
-任务状态为 `queued`、`running`、`completed` 或 `failed`。`failed` 的具体原因见返回的 `error` 和任务日志；日志接口返回最后 64 KiB。`completed` 表示推理进程成功退出且生成了非空视频，完整媒体解码可按部署指南第 5 节检查。
+任务状态为 `queued`、`running`、`completed` 或 `failed`。`failed` 的具体原因见返回的 `error` 和任务日志；日志接口返回最后 64 KiB。`completed` 表示推理进程成功退出且生成了非空视频，完整媒体解码可按部署指南第 4 节检查。
 
 状态变为 `completed` 后下载：
 

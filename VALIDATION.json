@@ -93,7 +93,7 @@
     ]
   },
   "api_service": {
-    "status": "passed_cpu_http_and_queue_tests",
+    "status": "passed_cpu_tests_and_real_gpu_api_request",
     "entry": "tools/serve_api.py",
     "dependency_policy": "Python standard library only; no modification to shared model environment",
     "tests": 4,
@@ -108,7 +108,20 @@
       "Restart queue recovery",
       "Graceful shutdown terminates active job and preserves pending requests"
     ],
-    "real_gpu_request": "not_run; underlying launch script has separate full-GPU validation",
-    "model_lifetime": "New inference process and model load per job; no resident-model reuse"
+    "real_gpu_request": "passed: authenticated POST, polling, HTTP download, full video/audio decode, and local forwarded access",
+    "model_lifetime": "New inference process and model load per job; no resident-model reuse",
+    "run_id": "api-service-20261102T034900Z",
+    "tested_source_commit": "e367dce",
+    "job_id": "54b3d6632e484c5ca99054207577f4d5",
+    "media": {
+      "width": 1344,
+      "height": 768,
+      "fps": "24",
+      "video_frames": 124,
+      "audio_frames": 163
+    },
+    "video_sha256": "3ecda5f4a83e176d1e0967b93e726a9c8f44d9bd755ed068326ba91685bbb6b2",
+    "job_wall_s": 366.17168521881104,
+    "timing_scope": "Job wall includes launch checks, model loading, generation and encoding; excludes GPU scheduling wait and request queue wait; not DiT-only."
   }
 }

@@ -10,8 +10,8 @@
     "official_revision": "781e8341fb3b29d3aea5d50265772e9619340b66",
     "cuda_executed": false
   },
-  "python_syntax_files": 169,
-  "bash_syntax_files": 9,
+  "python_syntax_files": 173,
+  "bash_syntax_files": 10,
   "documentation_bash_blocks_checked": 15,
   "launcher_integration_tests": {
     "status": "passed",
@@ -135,5 +135,22 @@
     "timing_scope": "Job wall includes launch checks, model loading, generation and encoding; excludes GPU scheduling wait and request queue wait; not DiT-only.",
     "server_entry": "serve.sh",
     "server_entry_argument_preservation": "passed"
+  },
+  "profiling_handoff": {
+    "date": "2026-11-03",
+    "wrapper": "tools/profile_single_stage.py",
+    "scope": "Single-stage four-forward staged adapter only",
+    "cpu_argument_tests": 3,
+    "latest_cpu_suite_total": 19,
+    "cpu_suite_status": "passed",
+    "documentation_bash_blocks_checked": 7,
+    "cuda_capture_validation": "not_run; original GPU allocation has terminated; no new allocation requested",
+    "numerical_implementation": "Official and frozen adaptation files unchanged",
+    "benchmark_scope": "Synchronized staged denoise body includes FSDP/SP; whole generate recorded separately; both exclude MP4 encoding",
+    "profile_scope": "Selected root forward windows via existing RunInstrumentation; rank0 by default",
+    "server_code_root": "/labdata2/hwx/Sol-H3-Runtime",
+    "cleanup_receipt_root": "/labdata2/hwx/sol-h3-8xrtx4090/cleanup-receipts/20261103-handoff",
+    "duplicate_weight_files_verified": 61,
+    "reclaimed_duplicate_allocated_GiB": 135.85005235671997
   }
 }

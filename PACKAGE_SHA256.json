@@ -1,9 +1,9 @@
 {
   ".gitignore": "8977eb5db568776cd69e2c7053c5a622f5a3ca7914efb4c13d9a347004146511",
   "NOTICE.md": "4e747dc960d88a29028318a9d8aba8eb03df98f690a337d12726e6bfffa942e8",
-  "README.md": "c5cc2a5ec55320101056e567c044c3e0edf6baf1c442140a86b7accb9f290b39",
+  "README.md": "666220cc94ceb95d126b2b0e4a234057811965b2d437d9343e01258293b65b2b",
   "SOURCES.json": "09ba8f53b4d8be2c2ed58fabb740fe4ddf0e96f13a1b163ef13cae7abf4b5854",
-  "VALIDATION.json": "e6aea65b166676619866712a35208e38d600843d98ccd6ed00cf0befef4ce0e1",
+  "VALIDATION.json": "50b36eeda7e618a61c358bd672daa96f4cef8749a9b6d0ea9f3b40be6d0291f6",
   "adapters/rtx4090/.gitignore": "cb55dd33ec2b50315030773ac2024df26f74d14199da56a1115824b5cda3d776",
   "adapters/rtx4090/EXPORT_CHECKS.json": "4a85cc245ad61096b81a16a862355d3db2db28bfb5075ece165eab4e7a356be8",
   "adapters/rtx4090/EXPORT_MANIFEST.json": "ceb5a8ccd8130d4be5139f654f5fa0c0276fd8bf718af92542ad7cc5abf8bbcd",
@@ -112,6 +112,7 @@
   "docs/API.md": "bc1c3175c5ba9ffa1d898c471ca14b128510ec3ccea7b8c6d80c9a542651de7e",
   "docs/DEPLOY_4090.md": "cd4fae482f7b1a8338b6169a7a33d6e62fca589e5b51fbe5d9d79c734e3eeeab",
   "docs/LINS_LAB.md": "fdd14360384c140ca38395753d637ff633df4fd4ea292b5b1163b7920565e8bc",
+  "docs/PROFILING_HANDOFF.md": "5afc0d3fdfe57f2961a32c1be1044d278b5d429f40153440970231364cccf438",
   "docs/source-comparison.json": "e8fdd221969d4ddf14789ef9f09ff4c5193fb00ac953b0a75ddb613aa2971015",
   "examples/4090.env.example": "77ff9182457f87430f501c40883073c7e3f8d07575fdae9731439fbaf7a8bcf7",
   "official/Sol-H3/.gitignore": "054a8bbc23fa1548b1a766d23f1659b6d00585f957672a564e776ccf2c2505e2",
@@ -208,7 +209,9 @@
   "tests/test_api.py": "583ce1d1388186a3f6a11b7d18d5b3670fbf5c3aecc96e21ccd918d11ef9fd79",
   "tests/test_launchers.py": "1e1a728d4dc656793c878e016344640715ed7b5a693b02f96b486b948280831e",
   "tests/test_preflight.py": "5ea78b2696b4ffc105e74519aa857f8a43352f0c6a9d6926fde17c9cadfed5ff",
+  "tests/test_profile_single_stage.py": "777cb904a1781430ab5cfd5c46173b0a714c87c939bed4f372246f157b755842",
   "tools/preflight_4090.py": "75622ff7e539be8e0b28b0aa1a744087ed3295f28ab6dacddbe72cde1017ff52",
+  "tools/profile_single_stage.py": "39819cdffc9396669bb1ed4ce6d3b5cfc3e776f9a20e1ffa31bfacbb7df7b8fa",
   "tools/serve_api.py": "02efa2c9474c7c1b1989e4b0a5b9576457f0d226bf0f5cac57cdfc6e5d7cb2c9",
   "tools/verify_sources.py": "c5f060bb3a8f3b0b72d48f3264f7338ee3314ce5ee225a684585722074e021c3"
 }

@@ -9,6 +9,8 @@ LINs Lab 的运行步骤见 [部署与推理指南](docs/LINS_LAB.md)，从取�
 
 在 GPU 服务器运行 `bash serve.sh` 可启动 HTTP 推理服务，按实际配置设置 `--entry`、`--model` 和 `--adapter`。服务提供请求排队、状态查询和视频下载，完整步骤见 [API 服务部署](docs/API.md)。
 
+DiT trace 采集、独立计时和已有研究 trace 的索引见 [profiling 交接](docs/PROFILING_HANDOFF.md)。其中新增四步观察包装器已通过 CPU 检查，CUDA 采集接入仍待 GPU 验收。
+
 ## LINs Lab 服务器配置
 
 现有完整生成部署对应 `scripts/run_lins_rtx4090_24g_8gpu.sh`，配置文件为 `configs/lins_rtx4090_24g_8gpu.env`。它来自 RTX4090 24 GiB 八卡的冻结部署记录，使用公共环境与权重，并自动检查设备和启动条件。

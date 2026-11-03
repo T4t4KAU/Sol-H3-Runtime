@@ -1,0 +1,42 @@
+[
+  {
+    "destination": "LTX-2.5/diffusion_models/ltx-2.5-22b-dev-transformer-bf16.safetensors",
+    "size": 42018190584,
+    "sha256": "792a2bad501ca03262c0bc2ce7a2949e85b142ce18e30894aad5bc849c8e7584"
+  },
+  {
+    "destination": "LTX-2.5/loras/ltx-2.5-22b-distilled-lora-450-bf16.safetensors",
+    "size": 8899889568,
+    "sha256": "86370bbf79a9eb4edaa158907e2b48a5188fe4c5dc8ce30c7eb8f2f131a9bbf5"
+  },
+  {
+    "destination": "LTX-2.5/vae/ltx-2.5-video-vae-conv-bf16.safetensors",
+    "size": 1452269922,
+    "sha256": "685b06ee3d9b2039647698fc4ea33175112462fc374e2777312c907897dfce8d"
+  },
+  {
+    "destination": "LTX-2.5/vae/ltx-2.5-audio-vae-bf16.safetensors",
+    "size": 364866540,
+    "sha256": "c52733d37f6a7fb7949c3dc0fb468c6cb2169e4d836983a73babb9f0d54837a5"
+  },
+  {
+    "destination": "H3-upscaler/minimax_h3_latent_upscaler_3d_bf16.safetensors",
+    "size": 690592992,
+    "sha256": "4f57821f5837f32f7142b67d815606dbd7550f194e5c769f7d6c3f83b146a5e6"
+  },
+  {
+    "destination": "H3-to-LTX-Latent-Adapter/config.json",
+    "size": 1024,
+    "sha256": "49e13820453c4e75b8c17c8248b46cfa6ab05c2b91fd52895a07ffd5d4dc3dd3"
+  },
+  {
+    "destination": "H3-to-LTX-Latent-Adapter/model.safetensors",
+    "size": 389541112,
+    "sha256": "170199a390c40ac97f5895bc9c8cc29817e74fb9193c858a85d8c0f1f30724ac"
+  },
+  {
+    "destination": "ltx-fixed.pt",
+    "size": 12586293,
+    "sha256": "0982339905b9294fcccd7e0c6ee2bae568c30b74218ffe2b1853334a510d1132"
+  }
+]

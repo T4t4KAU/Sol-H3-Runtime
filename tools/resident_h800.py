@@ -69,6 +69,8 @@ class H800ResidentBackend:
                 return original(block, components, state)
 
             def video(self, original, block, components, state):
+                if self.engine._capture_latents:
+                    return super().video(original, block, components, state)
                 self.mark("video_decode_resident")
                 return original(block, components, state)
 

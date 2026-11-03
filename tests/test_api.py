@@ -180,6 +180,12 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("resident H800 profile is fixed", result.stderr)
 
+    def test_seven_step_requires_server_configuration(self):
+        result = subprocess.run([sys.executable, str(ROOT / "tools/serve_api.py"),
+            "--backend", "h800-seven-step"], capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("requires --seven-step-config", result.stderr)
+
     def test_validation_failure_and_single_instance(self):
         for body in [{"prompt": ""}, {"prompt": "x", "seed": True},
                      {"prompt": "x", "duration": 10}, {"prompt": "x", "entry": "evil"}]:

@@ -279,8 +279,10 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--entry", type=Path, default=ROOT / "run.sh")
-    parser.add_argument("--backend", choices=("auto", "h800-resident", "subprocess"), default="auto",
+    parser.add_argument("--backend", choices=("auto", "h800-resident", "h800-seven-step", "subprocess"),
+                        default=os.environ.get("SOL_H3_BACKEND", "auto"),
                         help="auto uses the resident engine for the single-H800 entry")
+    parser.add_argument("--seven-step-config", type=Path, default=os.environ.get("SOL_H3_SEVEN_STEP_CONFIG"))
     parser.add_argument("--model", default=os.environ.get("SOL_H3_MODEL", "/Datasets/public_models/SOL-H3/MiniMax-H3"))
     parser.add_argument("--adapter", default=os.environ.get("SOL_H3_ADAPTER", "/Datasets/public_models/SOL-H3/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors"))
     parser.add_argument("--data-dir", type=Path, default=Path.home() / "sol-h3-api")
@@ -292,7 +294,12 @@ def main():
         parser.error("Require capacity>=1 and an existing launch script")
     command = ["bash", str(args.entry.resolve()), "--model", args.model, "--adapter", args.adapter] + args.launch_arg
     backend_factory = None
-    if args.backend == "h800-resident" or (args.backend == "auto" and args.entry.name == "run_h800_80g_1gpu.sh"):
+    if args.backend == "h800-seven-step":
+        if args.seven_step_config is None or args.launch_arg:
+            parser.error("h800-seven-step requires --seven-step-config and rejects --launch-arg")
+        from resident_seven_step import H800SevenStepBackend
+        backend_factory = lambda: H800SevenStepBackend(args.model, args.adapter, args.seven_step_config)
+    elif args.backend == "h800-resident" or (args.backend == "auto" and args.entry.name == "run_h800_80g_1gpu.sh"):
         if args.launch_arg:
             parser.error("--launch-arg is for the subprocess backend; the resident H800 profile is fixed")
         from resident_h800 import H800ResidentBackend

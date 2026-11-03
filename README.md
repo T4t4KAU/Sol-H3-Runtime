@@ -76,6 +76,8 @@ export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
 
 对应环境依赖见 `requirements-h800.txt`，采用 PyTorch 2.10.0+cu128，省略此路径不用的 CUDA13 BSA 依赖。准备好模型和环境、取得一张 H800 后，可用该入口直接推理，或传给 `serve.sh` 启动 API；具体命令见 [H800 API](docs/API.md#h800-80-gib-单卡)。API 与推理引擎持续运行，启动时加载一次权重，合并 LoRA 并预计算 AdaLN。DiT 与 VAE 保留在 GPU，文本编码器保留在 CPU，编码时按层上卡；后续请求复用相同模型实例。
 
+H800 也提供 H3 四步加 LTX 三步的常驻 API 配置，额外资产、固定源码和启动方式见 [七步服务](docs/H800_SEVEN_STEP.md)。单卡按阶段切换 CPU/GPU 放置，保留同一套模型对象。
+
 ## 代码组织
 
 ```text

@@ -1,0 +1,5 @@
+# Install after requirements-h800.txt, without replacing its Torch stack.
+scipy==1.16.3
+einops==0.8.1
+cloudpickle==3.1.2
+OpenImageIO==3.0.12.0

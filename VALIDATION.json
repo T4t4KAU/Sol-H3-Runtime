@@ -330,5 +330,209 @@
       "official_files_unchanged": 82,
       "frozen_adaptation_files_unchanged": 100
     }
+  },
+  "latest_validation_date": "2026-11-03",
+  "h800_seven_step_api": {
+    "date": "2026-11-03",
+    "status": "passed",
+    "backend": "tools/resident_seven_step.py",
+    "backend_sha256": "2198369ced6672bab5e7bacbb062001536f68272c513a531e2f260910ae60de4",
+    "api_cpu_tests": 9,
+    "authentication": "none",
+    "profile": {
+      "gpu": "single H800 80 GiB",
+      "compute": "BF16",
+      "attention": "dense",
+      "h3_forwards": 4,
+      "ltx_forwards": 3,
+      "h3_size": [
+        672,
+        384
+      ],
+      "output_size": [
+        1344,
+        768
+      ],
+      "output_frames": 121,
+      "fps": 24,
+      "ltx_sigmas": [
+        0.909375,
+        0.725,
+        0.421875,
+        0.0
+      ],
+      "ltx_lora_strength": 0.8,
+      "persistent_components": true,
+      "placement": "Models retained in memory; whole H3 and LTX stages swap between CPU and GPU"
+    },
+    "sources": {
+      "sana_revision": "670482d8a857d578ac8a2ea89b052d0fb47badba",
+      "sana_selected_files": 414,
+      "ltx_revision": "d151147788a9284cca791edc6ce898007e727fe6",
+      "ltx_files": 390,
+      "extra_assets_files": 8,
+      "extra_assets_sha256_verified": true,
+      "assets_manifest": "examples/seven-step-assets.manifest.json",
+      "official_files_unchanged": 82,
+      "frozen_files_unchanged": 100
+    },
+    "startup_s": 358.04578468296677,
+    "component_load_counts": {
+      "transformer": 1,
+      "text_encoder": 1,
+      "vae": 1,
+      "audio_vae": 1,
+      "ltx_transformer": 1,
+      "ltx_audio_encoder": 1,
+      "ltx_video_decoder": 1,
+      "h3_upscaler": 1,
+      "h3_ltx_adapter": 1
+    },
+    "checks": {
+      "same_worker_pid": true,
+      "same_model_instance": true,
+      "same_component_objects": true,
+      "load_count_stayed_one": true,
+      "fifo": true,
+      "full_video_and_audio_decode": true,
+      "no_api_key": true,
+      "actual_h3_4_ltx_3_forwards": true
+    },
+    "requests": [
+      {
+        "id": "57bc8b96fccf42dd896549426f77cbc8",
+        "seed": 0,
+        "request_index": 1,
+        "forward_counts": {
+          "h3": 4,
+          "ltx": 3
+        },
+        "request_wall_s": 114.27344367653131,
+        "phases": [
+          {
+            "name": "h3_generation",
+            "start_s": 7.082894444465637e-05,
+            "end_s": 65.53476143348962
+          },
+          {
+            "name": "park_h3",
+            "start_s": 65.53477441705763,
+            "end_s": 80.00308083556592
+          },
+          {
+            "name": "bridge_and_audio_conditioning",
+            "start_s": 80.0030977902934,
+            "end_s": 81.36806883569807
+          },
+          {
+            "name": "load_ltx_to_gpu",
+            "start_s": 81.36808398272842,
+            "end_s": 87.0425221528858
+          },
+          {
+            "name": "ltx_three_updates",
+            "start_s": 87.04255018197,
+            "end_s": 93.92032003775239
+          },
+          {
+            "name": "park_ltx",
+            "start_s": 93.92033346742392,
+            "end_s": 103.5018494259566
+          },
+          {
+            "name": "video_decode_and_encoding",
+            "start_s": 103.501863299869,
+            "end_s": 105.90903711039573
+          },
+          {
+            "name": "restore_h3_to_gpu",
+            "start_s": 105.90905140060931,
+            "end_s": 114.27310854382813
+          }
+        ],
+        "cuda_peak_allocated_bytes": 53278629376,
+        "media": {
+          "bytes": 3451182,
+          "sha256": "958681897a5fbe44b89cfcb30e4dc908d64ee1f6d66317decd4dfe6fc07369c4",
+          "width": 1344,
+          "height": 768,
+          "fps": 24.0,
+          "video_frames": 121,
+          "audio_frames": 158,
+          "sample_std": 62.847964692776756
+        }
+      },
+      {
+        "id": "5bc4661e2c39419488c084eeae2423a8",
+        "seed": 1,
+        "request_index": 2,
+        "forward_counts": {
+          "h3": 4,
+          "ltx": 3
+        },
+        "request_wall_s": 69.40246137883514,
+        "phases": [
+          {
+            "name": "h3_generation",
+            "start_s": 4.696473479270935e-05,
+            "end_s": 23.35723139345646
+          },
+          {
+            "name": "park_h3",
+            "start_s": 23.357243745587766,
+            "end_s": 38.22531814780086
+          },
+          {
+            "name": "bridge_and_audio_conditioning",
+            "start_s": 38.22533606737852,
+            "end_s": 39.141597708687186
+          },
+          {
+            "name": "load_ltx_to_gpu",
+            "start_s": 39.14161269180477,
+            "end_s": 44.18707284424454
+          },
+          {
+            "name": "ltx_three_updates",
+            "start_s": 44.187089453451335,
+            "end_s": 48.65346970129758
+          },
+          {
+            "name": "park_ltx",
+            "start_s": 48.65348224155605,
+            "end_s": 58.01485621742904
+          },
+          {
+            "name": "video_decode_and_encoding",
+            "start_s": 58.014873057603836,
+            "end_s": 60.401479525491595
+          },
+          {
+            "name": "restore_h3_to_gpu",
+            "start_s": 60.4014926860109,
+            "end_s": 69.40216430649161
+          }
+        ],
+        "cuda_peak_allocated_bytes": 53547010560,
+        "media": {
+          "bytes": 3553788,
+          "sha256": "f4992f617e70cf6804826d33b4098e3bcd5270f6c451b0109f4159fe2e3d8e18",
+          "width": 1344,
+          "height": 768,
+          "fps": 24.0,
+          "video_frames": 121,
+          "audio_frames": 158,
+          "sample_std": 53.0078966230935
+        }
+      }
+    ],
+    "initial_failed_attempt": {
+      "status": "failed_before_ltx",
+      "cause": "Bridge adapter wrapper device remained CPU after its model moved to CUDA; corrected by synchronizing wrapper device with placement",
+      "queued_second_request": "cancelled before execution",
+      "reported_separately": true
+    },
+    "timing_scope": "Two functional API requests with distinct prompts/seeds, synchronized phase timing; excludes startup and queue wait, includes CPU/GPU stage placement and media encoding; not a speedup benchmark",
+    "quality_scope": "Full video/audio decode and nonconstant decoded frame check; no perceptual comparison"
   }
 }

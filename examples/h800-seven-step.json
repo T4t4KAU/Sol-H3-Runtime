@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "assets_root": "/path/to/assets/seven-step",
+  "sana_root": "/path/to/sources/Sana",
+  "ltx_root": "/path/to/sources/LTX-2",
+  "h3_upscaler_source": "/path/to/minimax_h3_latent_upscaler_3d.py",
+  "extra_python_path": "/path/to/envs/seven-step-extra"
+}

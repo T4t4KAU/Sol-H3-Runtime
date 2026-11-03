@@ -1,290 +1,265 @@
-# SOL-H3 profiling 交接
+# SOL-H3 DiT profiling 交接
 
-更新日期：2026-11-03。本文从已获得 GPU、进入 GPU 服务器／容器终端开始，不包含服务器认证或资源申请步骤。本轮完成文件整理和 profiling 工具准备，没有新申请 GPU，也没有新增整模型测量结果。
+更新：2026-11-03。目标是分析单请求、FastH3 四次去噪中 DiT 的计算开销。测试方法是**先准备并暂存其他模块提供的输入，复用这些输入，只执行和观测 DiT；去噪结束立即停止，不执行 VAE 解码、音频解码和视频编码**。
 
-## 1. 当前状态与保留目录
+本文依据服务器上的实际认证、调度配置和已完成的 native SOL-H3 双卡／四卡 profiling 驱动整理。本次更新核实了认证、路径及驱动实现，没有重新申请 GPU 或新增性能数据。
 
-2026-11-03 核查时，原八卡 API 分配 `41dab198-08d6-445c-8cd5-b7c42b6d0f4c` 已结束，当前账号没有运行中的 GPU 会话。API 曾通过真实请求验收，但当前不在运行。历史 `api.pid` 等文件已标为 terminated，不能当成当前进程 PID 使用。
+## 1. 登录服务器与认证调度器
 
-| 用途 | 服务器路径 |
+### 1.1 本机通过 SSH 密钥登录
+
+在保存有密钥的本机执行：
+
+```bash
+ssh -i /home/hwx/.ssh/id_ed25519_lins_lab \
+  -o IdentitiesOnly=yes -p 22332 tempuser16@10.0.2.166
+```
+
+登录账号是 `tempuser16`，端口为 `22332`，私钥位置为 `/home/hwx/.ssh/id_ed25519_lins_lab`。接手者使用自己有权使用的 SSH 密钥；不要复制私钥内容到代码仓库或交接文档。
+
+### 1.2 在登录节点认证 Determined
+
+SSH 登录和 GPU 调度器登录是两套认证。调度器使用登录节点上的令牌缓存：`/home/tempuser16/.config/determined/auth.json`。
+
+以下命令均在登录节点执行，显式指定当前配置使用的 master：
+
+```bash
+export DET_MASTER=http://192.168.123.168:8080
+detcli() { /usr/bin/python3 -m determined.cli -m "$DET_MASTER" "$@"; }
+detcli user whoami
+```
+
+2026-11-03 实测返回当前账号 `tempuser16`。如果令牌过期，重新登录：
+
+```bash
+detcli user login tempuser16
+detcli user whoami
+```
+
+按交互提示输入账号密码，成功后 CLI 更新令牌缓存。SSH 密钥不能替代此步骤；文档不保存密码或令牌值。不要用其他账号已有的 GPU 会话运行测试。
+
+## 2. GPU 申请、排队与进入容器
+
+### 2.1 选择资源
+
+当前消费卡资源池包括 `64c128t_512_4090`（每节点约 512 GiB 主机内存）和 `128c256t_768_4090`（每节点约 768 GiB 主机内存），均有 RTX4090 24 GiB 节点。资源池名称与实际可用资源仍以调度器当时的配置为准。
+
+已有 DiT profiling 驱动分别支持双卡和四卡，必须使用匹配的驱动。它们使用 SP2／SP4，不分片模型权重；每个 rank 都需要 CPU 权重副本。现有主机内存准入门槛为：双卡 `MemAvailable > 260,000,000,000` 字节，四卡 `> 460,000,000,000` 字节。这是现有驱动的保守门槛，不是模型固有最小内存需求。四卡优先选主机内存更充足的资源池。
+
+### 2.2 提交一次 GPU 会话申请
+
+在登录节点执行。默认申请双卡，改为四卡时同时修改 `SOL_H3_GPUS=4` 并选择对应池：
+
+```bash
+export SOL_H3_GPUS=2
+export SOL_H3_POOL=64c128t_512_4090
+export SOL_H3_REQUEST="$HOME/sol-h3-dit-request.json"
+/usr/bin/python3 - <<'PYCONF'
+import json, os
+from pathlib import Path
+n = int(os.environ["SOL_H3_GPUS"])
+assert n in (2, 4)
+image = "harbor.lins.lab/determinedai/environments:cuda-11.8-pytorch-2.0-gpu-mpi-0.31.1"
+config = {
+    "description": f"SOL-H3 DiT profiling {n} GPU",
+    "resources": {"resource_pool": os.environ["SOL_H3_POOL"],
+                  "slots": n, "shm_size": 68719476736},
+    "bind_mounts": [
+        {"host_path": "/labdata2/hwx", "container_path": "/labdata2/hwx", "read_only": False},
+        {"host_path": "/Datasets/public_models", "container_path": "/Datasets/public_models", "read_only": True},
+    ],
+    "work_dir": "/labdata2/hwx/Sol-H3-Runtime",
+    "environment": {"image": {"cpu": image, "cuda": image}},
+}
+Path(os.environ["SOL_H3_REQUEST"]).write_text(json.dumps(config, indent=2) + "\n")
+PYCONF
+detcli shell start --config-file "$SOL_H3_REQUEST" --detach
+```
+
+该命令使用现有集群镜像，实际模型 Python 使用第 3 节已有环境。提交后保存输出的 shell/task ID，例如设置 `SOL_H3_SHELL_ID` 为实际返回值。申请使用当前账号，两个挂载分别提供代码／实验数据和公共权重／环境。
+
+### 2.3 排队不等于运行
+
+```bash
+detcli shell list
+```
+
+拿到任务 ID **不代表已拿到 GPU**。`QUEUED` 表示等待调度；GPU 数量、同节点资源和其他作业均可能影响等待时间，历史上有等待数小时的情况。不要为同一测试重复提交多个申请。资源池总卡数也不等于空闲卡数。
+
+等待目标会话显示 `RUNNING` 后，在登录节点设置实际 ID 并进入：
+
+```bash
+export SOL_H3_SHELL_ID='替换为本次申请返回的ID'
+detcli shell open "$SOL_H3_SHELL_ID"
+```
+
+此命令按调度器生成的连接方式进入 GPU 容器；不要拿登录节点当计算节点，也不要复用历史端口或旧会话连接信息。进入容器后用 `nvidia-smi` 确认分配到的卡数、型号和进程。后续 Python／torchrun 都在 GPU 容器内运行。
+
+## 3. 代码、权重、环境与输入缓存的位置
+
+| 内容 | 服务器路径 |
 |---|---|
-| 整理后的代码 | `/labdata2/hwx/Sol-H3-Runtime` |
-| 公共模型 | `/Datasets/public_models/SOL-H3/MiniMax-H3` |
+| 整理后的代码仓库 | `/labdata2/hwx/Sol-H3-Runtime` |
+| 官方源码 | `/labdata2/hwx/Sol-H3-Runtime/official/Sol-H3` |
+| 公共 MiniMax-H3 权重 | `/Datasets/public_models/SOL-H3/MiniMax-H3` |
 | 公共 FastH3 LoRA | `/Datasets/public_models/SOL-H3/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors` |
-| 公共解释器 | `/Datasets/public_models/SOL-H3/envs/solh3-4090/bin/python` |
-| 公共基础 Python | `/Datasets/public_models/SOL-H3/python/cpython-3.13.9-linux-x86_64-gnu` |
-| 历史实验与 trace | `/labdata2/hwx/sol-h3-8xrtx4090/` |
-| API 与功能验收证据 | `/labdata2/hwx/sol-h3-8xrtx4090/api-service-20261102T034900Z/` |
-| 本轮清理凭据 | `/labdata2/hwx/sol-h3-8xrtx4090/cleanup-receipts/20261103-handoff/` |
-| 建议的新 profiling 输出根目录 | `/labdata2/hwx/sol-h3-8xrtx4090/profiles/` |
+| 公共运行环境解释器 | `/Datasets/public_models/SOL-H3/envs/solh3-4090/bin/python` |
+| native 研究驱动已使用的解释器 | `/labdata2/hwx/sol-h3/envs/solh3-4090-port-v1/bin/python` |
+| native CUDA 工具链 | `/labdata2/hwx/sol-h3/tools/cuda-12.8` |
+| 编译器 | `/labdata2/hwx/sol-h3/tools/compiler` |
+| 双卡 DiT profiling 模板 | `/labdata2/hwx/sol-h3-8xrtx4090/native-fullopt-4090-20261031T030218Z` |
+| 四卡 DiT profiling 模板 | `/labdata2/hwx/sol-h3-8xrtx4090/native-fullopt-g4-4090-20261031T045649Z` |
+| 真实条件缓存及共享 native 源码所在目录 | `/labdata2/hwx/sol-h3-8xrtx4090/native-compute-4090-20261030T174243Z` |
 
-GPU 环境需要同时挂载代码／结果所在的 `/labdata2/hwx` 和公共资产所在的 `/Datasets/public_models`。旧 checkpoint 路径改为公共副本的软链接后，也要求公共目录在容器内可见。公共权重和环境不要原地升级。
+仓库地址：[T4t4KAU/Sol-H3-Runtime](https://github.com/T4t4KAU/Sol-H3-Runtime)。官方源码固定上游 revision `781e8341fb3b29d3aea5d50265772e9619340b66`。native 研究模板、缓存和历史 trace 是服务器上的独立实验资产，不包含在仓库克隆中；复现本文使用这些已保留的服务器资产。
 
-## 2. 先确认要测哪条路径
+公共环境为 Python 3.13.9、PyTorch 2.11.0+cu128。复现下述 native trace 时先使用其已验证的研究解释器，并加载模板中的 `native-deps` 和 `runtime`。不要仅因 Python／Torch 版本相同就直接替换依赖路径。公共目录不原地安装、升级依赖。
 
-| 路径 | 已核实的配置与范围 | 使用建议 |
-|---|---|---|
-| 本仓库八卡显存适配入口 | FastH3 四次 DiT 前向；1344×768、124 帧、24 FPS；8×4090 24 GiB；FSDP8＋SP8；dense Flash SDPA；分阶段加载；eager tiled VAE | 可以沿用已完成视频生成验证的配置，按第 4 节采集新 trace |
-| 已有 native 全优化研究 trace | 2／4×4090；FastH3 四次前向；Sol-Attn Triton；原生融合与 AdaLN；SP2／SP4；无 FSDP；20 个常驻 block＋30 个固定 CPU offload block；真实文本条件缓存；FP8 输出通信 | 先读第 7 节已有证据；这是 DiT-only 研究路径，不是上面八卡完整生成配置 |
-| 原样官方实现 | `official/Sol-H3/`，固定上游 revision `781e8341fb3b29d3aea5d50265772e9619340b66` | 不因设置多个 SP rank 就认为权重被分片；在 24 GiB 卡上不可直接替代显存适配入口 |
+## 4. 测试方法：暂存非 DiT 输入，只测 DiT
 
-八卡显存适配默认没有开启稀疏注意力、AdaLN 预计算、packed SP 和原生 kernel fusions，其 trace 不能代表官方全优化计算。不要为了“能跑”临时改精度、分辨率或算子后端，然后仍用原来的配置名称汇报。
+现有固定请求为文本生成视频、约 5 秒，1344×768、124 帧，seed=0；FastH3 四次主干前向、BF16 计算。真实文本编码结果预先缓存，后续测试无需重新加载和执行大型文本编码器。
 
-四步、原版 49 步、H3 四步＋LTX 三步是不同工作负载。不要混用数据；50 个 transformer block 也不等于 50 次去噪。
+缓存文件 `conditioning.pt` 包含：
 
-## 3. 入口能力与本次验证边界
+| 字段 | 内容 |
+|---|---|
+| `prompt_embeds` | 真实文本编码结果，BF16，形状 `[537, 5120]` |
+| `text_token_tags` | 文本 token 标签，int64，形状 `[537]` |
+| `prompt` | 与缓存对应的原始提示词 |
 
-当前 `adapters/rtx4090/infer.py` 的内置 `--profile-dir`／`--benchmark-dir` 只接受 `original` 或 `two-stage` 模式，不能直接用于 `single-stage`。官方 `infer.py` 也没有这两个参数。给现有四步启动脚本追加 `--profile-dir` 会在参数检查阶段失败。
+具体边界如下：
 
-本轮新增独立包装器 `tools/profile_single_stage.py`：通过现有 instrumentation 接口观测四步路径，不改动官方与冻结适配源码。它可以：
+1. 读取真实条件缓存，准备原生 pipeline 所需的输入；初始视频／音频 latent、timesteps 等按固定请求在计时外构造，暂存在 `state.values` 中。**目前落盘的是文本条件，其余入口状态在内存中暂存，并非都已保存为独立磁盘文件。**
+2. 在 `MiniMaxH3DenoiseLoopWrapper.__call__` 入口，将暂存输入放到目标设备，并记录 `latents`、`audio_latents`、`prompt_embeds`、`timesteps` 的形状、dtype 与 SHA256。
+3. 等待 CUDA 完成，进行 rank barrier，再同步；从调用原生 denoise loop 前开始计时，直到 loop 返回并完成 CUDA 同步。输入准备和初始放置在计时区间外。
+4. 保存视频和音频的最终 latent，检查有限值和输入／输出哈希，通过 `DiTComplete` 正常结束本轮。**VAE、音频解码、视频编码不运行。**
 
-- 选择 DiT 前向索引和采集 rank，导出 CPU/CUDA Chrome trace 与算子统计。
-- 在无 profiler 的独立 benchmark 运行中，同步计时 staged `denoise` 阶段。
-- 记录四次前向的完成数、源码哈希、运行参数、每 rank 状态与错误。
+这是完整去噪循环的 DiT 边界，包含其中的 scheduler 更新和 SP 通信；当前显存适配在循环内触发的权重 offload 传输也在墙钟时间中。研究计算算子时在 trace 中另行统计计算 kernel，不能把这个墙钟时间直接称为“纯计算时间”。
 
-**包装器已通过 CPU 参数及范围检查，尚未在真实 GPU 上验收这次新增的 CUDA 采集／计时接入。** 已有 GPU 功能验证属于底层四步推理脚本；已有 native trace 属于第 7 节旧研究路径。下一位拿到 GPU 后，应先执行下面的 CUPTI 小测试，再验证新包装器的前向计数、trace 与视频输出，不能把本交接当成新增 profiling 成功证据。
+native 配置采用 Sol-Attn Triton、原生首步和前两层 dense 策略、QKV 通信融合及 AdaLN 预计算；SP2／SP4，无 FSDP／TP；20 个 block 常驻、30 个 block 固定 CPU offload。QKV 通信 BF16，输出通信 FP8；**这不等于权重或 GEMM 使用 FP8 量化**。SM89 路线固定 eager、关闭 packed input，不能称为所有硬件上所有优化都开启。
 
-## 4. 当前八卡四步路径的采集步骤
+缓存只适用于其对应的提示词和输入约束。更换提示词、token 数、分辨率、时长或任务类型时，重新生成真实上游输出并核对模型、LoRA、seed、形状与 dtype；不能保留旧文本条件却声称测量了新请求。比较两个 DiT 实现时，必须复用相同的入口输入。
 
-### 4.1 固定路径、参数和证据目录
+## 5. 在新目录中复现 DiT profiling
+
+### 5.1 选择匹配模板并准备独立目录
+
+以下均在 GPU 容器内执行。卡数必须与本次分配一致；双卡和四卡分别使用对应模板，不能只改 torchrun 进程数。
 
 ```bash
-export SOL_H3_REPO=/labdata2/hwx/Sol-H3-Runtime
-export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
-export SOL_H3_PYTHON="$SOL_H3_ASSETS/envs/solh3-4090/bin/python"
-export SOL_H3_MODEL="$SOL_H3_ASSETS/MiniMax-H3"
-export SOL_H3_ADAPTER="$SOL_H3_ASSETS/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors"
-export RUN_ROOT="/labdata2/hwx/sol-h3-8xrtx4090/profiles/fast4-$(date -u +%Y%m%dT%H%M%SZ)"
-mkdir -p "$RUN_ROOT"
-cd "$SOL_H3_REPO"
+set -e
+export SOL_H3_GPUS=2
+export B=/labdata2/hwx/sol-h3-8xrtx4090
+case "$SOL_H3_GPUS" in
+  2) export TEMPLATE="$B/native-fullopt-4090-20261031T030218Z" ;;
+  4) export TEMPLATE="$B/native-fullopt-g4-4090-20261031T045649Z" ;;
+  *) echo 'Use the matching 2-GPU or 4-GPU driver'; exit 1 ;;
+esac
+export R="$B/profiles/dit-g${SOL_H3_GPUS}-$(date -u +%Y%m%dT%H%M%SZ)"
+export PY=/labdata2/hwx/sol-h3/envs/solh3-4090-port-v1/bin/python
+export ASSETS=/Datasets/public_models/SOL-H3
+mkdir -p "$R/checkpoints"
+for name in native_compute_profile.py compute_observer.py qkv_toggle.py \
+            platform_preflight.py wire_preflight.py analyze_native_trace_v2.py; do
+  cp "$TEMPLATE/$name" "$R/$name"
+done
+cp -L "$TEMPLATE/conditioning.pt" "$R/conditioning.pt"
+ln -s "$(readlink -f "$TEMPLATE/runtime")" "$R/runtime"
+ln -s "$(readlink -f "$TEMPLATE/native-deps")" "$R/native-deps"
+ln -s "$ASSETS/MiniMax-H3" "$R/checkpoints/model"
+ln -s "$ASSETS/FastH3-4-step-Preview-v1-LoRA" "$R/checkpoints/adapter"
+cd "$R"
+```
 
-nvidia-smi --query-gpu=index,name,uuid,memory.total,driver_version --format=csv > "$RUN_ROOT/gpus.csv"
-nvidia-smi topo -m > "$RUN_ROOT/topology.txt"
-"$SOL_H3_PYTHON" tools/verify_sources.py > "$RUN_ROOT/source-integrity.json"
+不要重新运行历史 `controller.py`：它绑定了历史 allocation ID，并有旧任务的状态约束。这里直接使用相同 DiT 驱动，在新目录保存本次输出，不覆盖已有证据。
 
-export OMP_NUM_THREADS=1
-export TOKENIZERS_PARALLELISM=false
+### 5.2 环境与运行前检查
+
+```bash
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+export HF_HUB_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1
+export TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
 export PYTHONDONTWRITEBYTECODE=1
-export HF_HUB_OFFLINE=1
-export TRANSFORMERS_OFFLINE=1
-export TORCH_NCCL_ASYNC_ERROR_HANDLING=1
-export DISABLE_ADDMM_CUDA_LT=1
-
-H3_ARGS=(
-  --model "$SOL_H3_MODEL" --adapter "$SOL_H3_ADAPTER"
-  --task t2v --duration 5 --seed 0
-  --prompt 'An adult dancer performs energetic choreography on a brightly lit stage.'
-  --mode single-stage
-  --fsdp-degree 8 --ulysses-degree 8 --staged-loading --text-fsdp --flash-sdpa
-  --no-tf32 --no-bf16-reduced-precision-reduction --no-adaln-precompute
-  --no-kernel-fusions --no-packed-sp --no-parallel-vae
-  --vae-compile-mode eager --vae-tile-size 256
-  --attention-backend dense --compute-quant none --lora-mode merged
-)
-```
-
-这组参数与已验证的 `adapters/rtx4090/run_single_stage_8x4090.sh` 一致。这里只手动展开启动参数，便于在每个 worker 外增加观察器，不要再套一层八卡启动脚本。不要覆盖调度器已经设置好的 GPU 可见性；先确认当前环境确实提供八张目标 GPU。
-
-### 4.2 检查解析和 CUPTI 可用性
-
-```bash
-"$SOL_H3_PYTHON" tools/profile_single_stage.py \
-  --artifacts "$RUN_ROOT/argument-check" --check-arguments \
-  -- "${H3_ARGS[@]}" --output "$RUN_ROOT/argument-check.mp4"
-
-"$SOL_H3_PYTHON" - "$RUN_ROOT/cupti-smoke.json" <<'PY'
-import json
+export PYTHONPATH="$R/native-deps:$R/runtime"
+export TRITON_CACHE_DIR="$R/triton-cache"
+export PYTORCH_ALLOC_CONF=expandable_segments:True
+export H3_ULYSSES_COMM_DTYPE=bf16 H3_ULYSSES_OUTPUT_DTYPE=fp8
+export H3_SOL_COMPILE_BUCKET_SIZE=0 H3_SOL_PACKED_INPUT=0 H3_MODEL_PROFILE=fast4
+export CUDA_HOME=/labdata2/hwx/sol-h3/tools/cuda-12.8
+export PATH="/labdata2/hwx/sol-h3/tools/compiler/bin:$B/node08-single-20261026T151723Z/ninja-tool/bin:$PATH"
+export LD_LIBRARY_PATH="/labdata2/hwx/sol-h3/tools/compiler/lib:${LD_LIBRARY_PATH:-}"
+unset NCCL_P2P_DISABLE NCCL_SHM_DISABLE NCCL_P2P_LEVEL
+nvidia-smi --query-gpu=index,name,uuid,memory.total,driver_version --format=csv > "$R/gpu-identity.txt"
+nvidia-smi topo -m > "$R/topology.txt"
+"$PY" - <<'PYCHECK'
+import hashlib, json, os
 from pathlib import Path
-import sys
 import torch
-
-assert torch.cuda.is_available(), "No CUDA device"
-x = torch.randn(512, 512, device="cuda")
-x @ x
-torch.cuda.synchronize()
-with torch.profiler.profile(
-    activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
-    record_shapes=False, profile_memory=False, with_stack=False,
-) as prof:
-    x @ x
-    torch.cuda.synchronize()
-prof.export_chrome_trace(sys.argv[1])
-events = json.loads(Path(sys.argv[1]).read_text())["traceEvents"]
-kernels = [e for e in events if e.get("cat") == "kernel"]
-assert kernels, "No CUDA kernel events: check CUPTI and profiling permissions"
-print("PASS: CUDA kernel events", len(kernels))
-PY
+r = Path(os.environ["R"])
+n = int(os.environ["SOL_H3_GPUS"])
+assert torch.cuda.device_count() == n
+assert all("4090" in torch.cuda.get_device_name(i) for i in range(n))
+available = int(next(x for x in Path("/proc/meminfo").read_text().splitlines()
+                     if x.startswith("MemAvailable:")).split()[1]) * 1024
+required = 260_000_000_000 if n == 2 else 460_000_000_000
+assert available > required, ("Insufficient host RAM", available, required)
+assert (r / "checkpoints/model/modular_model_index.json").is_file()
+assert (r / "checkpoints/adapter/dense-datafree/adapter_model.safetensors").is_file()
+files = list(r.glob("*.py")) + [r / "conditioning.pt"]
+files += list((r / "runtime").rglob("*.py")) + list((r / "native-deps").rglob("*.py"))
+manifest = {str(p.relative_to(r)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+(r / "execution-sha256.json").write_text(json.dumps(manifest, indent=2) + "\n")
+(r / "memory-before.json").write_text(json.dumps({"available_bytes": available}))
+PYCHECK
 ```
 
-只有 CUDA kernel 事件存在才继续；CPU-only trace 不能用于 GPU 算子结论。不要在公共环境原地执行 `pip install -U` 解决问题，先检查当前 CUDA、CUPTI、驱动和容器权限。
+如果主机内存门槛未通过，先等待同节点内存释放或重新选择资源；不要把 CPU OOM 记成 DiT 显存容量结论。检查 `nvidia-smi` 中没有自己的其他计算任务与本次测试抢卡。不要覆盖调度器的 GPU 可见性设置。
 
-### 4.3 有界算子 profiling
+### 5.3 预检与 DiT trace 采集
 
-首次先只采 rank 0，覆盖四次 DiT 前向。其余 rank 仍参与原计算与通信，只记录前向计数和状态：
+下面各步应顺序执行；任一步失败，停止后续步骤并保留日志。
 
 ```bash
-set -o pipefail
-"$SOL_H3_PYTHON" -m torch.distributed.run --standalone --nproc-per-node=8 \
-  tools/profile_single_stage.py \
-  --artifacts "$RUN_ROOT/profile" --capture profile \
-  --forward-indices 0,1,2,3 --profile-ranks 0 \
-  -- "${H3_ARGS[@]}" --output "$RUN_ROOT/profile.mp4" \
-  2>&1 | tee "$RUN_ROOT/profile.log"
+set -e
+"$PY" "$R/platform_preflight.py" > "$R/platform-preflight.log" 2>&1
+"$PY" -m torch.distributed.run --standalone --nproc_per_node="$SOL_H3_GPUS" \
+  "$R/wire_preflight.py" > "$R/fp8-wire-preflight.log" 2>&1
+"$PY" -u -m torch.distributed.run --standalone --nproc_per_node="$SOL_H3_GPUS" \
+  "$R/native_compute_profile.py" > "$R/profile.log" 2>&1
+"$PY" "$R/analyze_native_trace_v2.py" > "$R/analysis.log" 2>&1
 ```
 
-每个 `rankN/` 目录包括：
+建议在 `tmux` 等持久终端中执行；另一个终端可用 `tail -f "$R/profile.log"` 查看。首次 native kernel 编译和权重准备可能较慢，日志无最终结果时先看 `driver-progress-rank*.json` 所处阶段。
 
-| 文件 | 含义 |
+该驱动固定执行一次 warmup、一次带 profiler 的观测轮；rank0 采集 CPU／CUDA trace，所有 rank 执行完整去噪。它验证前后输入及最终 latent 逐位一致，并检查 QKV 融合、FP8 输出通信及 sparse 路径实际执行。
+
+## 6. 输出检查与计时解释
+
+| 文件 | 应检查的内容 |
 |---|---|
-| `metadata.json` | 源码哈希、启动参数、rank、torch/CUDA 身份与采样范围 |
-| `summary-rankN.json` | 前向计数、状态、阶段 host wall time、allocator 峰值 |
-| `launch-result.json` | 该 worker 完整推理入口是否退出成功，包含编码之后的状态 |
-| `trace-rank0-forward0.json` 等 | 被采 rank 的选定前向 CPU/CUDA trace |
-| `operators-rank0-forward0.json` 等 | PyTorch operator 与 GPU 事件统计，单位见 JSON 字段 |
+| `loaded-rank*.json` | 卡数、GPU、软件版本、条件哈希、四次前向、稀疏后端及显存策略 |
+| `on-warmup-rank*.json` | warmup 耗时、入口哈希和最终 latent 哈希 |
+| `on-measured-rank*.json` | 带 profiler 的 DiT 墙钟 `dit_s`、逐 rank 时长、显存峰值 |
+| `profile-verified-rank*.json` | 每个 rank 均 `status=completed`；输入／最终 latent 一致；sparse 执行记录 |
+| `on-validated-dispatch-rank*.json` | QKV fused 路径实际调用计数 |
+| `observer-rank0.json` | `model_forwards=4`，观察范围及状态 |
+| `rank0.trace.json.gz` | CUPTI 原始 trace，可用 Perfetto 查看 |
+| `operator-shapes-rank0.json` | 计算算子输入形状 |
+| `compute-rank0.json` | 按 DiT 模块归因的计算 kernel 统计 |
+| `on-measured-latents.pt` | 去噪后的视频／音频 latent；不是编码视频 |
 
-trace 从 root forward 的 pre-hook 开始，覆盖该 forward 的 FSDP unshard 和 SP 通信，不仅是矩阵乘。初始化 checkpoint 加载、文本编码、VAE 解码和 MP4 编码不在这些 forward trace 内。
+关键口径：
 
-默认不启用 `record_shapes`、memory profiling 或 stack，避免一次收集过多数据。需要确认跨 rank 等待时，另开一个小范围诊断运行，例如 `--forward-indices 2 --profile-ranks 0,1,2,3,4,5,6,7`；这会增加开销，不能作为干净性能结果。不要将不同运行的 trace 拼接为同一个请求。
+- `dit_s` 是同步后的各 rank 时长最大值，不是各卡求和或平均。
+- 当前 `on-measured` **启用了 profiler**，只能描述该观测轮；warmup 可能包含首次编译和 AdaLN 预计算，也不能充当稳定性能基线。正式比较加速比时，另做相同缓存输入、相同预热与配置、**关闭 profiler** 的独立 benchmark。本文复用的驱动未提供独立 clean-benchmark 开关，不能把两个现有 JSON 改名后作为该数据。
+- `compute-rank0.json` 排除 NCCL、memcpy、memset，计算模块占比的分母是该 rank 的计算 kernel 累计时间，**不是完整 DiT 墙钟**。不得把多流、嵌套 scope 或多个 rank 时间直接相加为请求时间。
+- 计算 bottleneck 排序应看原生优化实际启用后的 trace，并保留未归因开销。通信、传输可能与计算重叠或干扰，剔除对应事件后不能声称实测了“无传输干扰”的计算时长。
+- 输入／输出 latent 哈希一致用于确认观察器未改变该固定请求的结果，不代表新的近似计算策略已经完成感知质量验证。
 
-### 4.4 独立的 DiT 计时
-
-没有可用的同配置干净计时记录时，再单独运行一次；若已有完整记录则复用，不为凑样本重复成功配置。
-
-```bash
-set -o pipefail
-"$SOL_H3_PYTHON" -m torch.distributed.run --standalone --nproc-per-node=8 \
-  tools/profile_single_stage.py \
-  --artifacts "$RUN_ROOT/benchmark" --capture benchmark \
-  -- "${H3_ARGS[@]}" --output "$RUN_ROOT/benchmark.mp4" \
-  2>&1 | tee "$RUN_ROOT/benchmark.log"
-```
-
-这一模式不创建 `torch.profiler`，不做 latent fingerprint 拷贝，仍保留计数 hook、边界同步和状态记录。`timings.synchronized_denoise_s` 的边界是：staged 初始权重加载完成后，进入 `denoise` body 前进行 barrier／CUDA synchronize；body 返回后 CUDA synchronize，再停止计时。它包括四次 DiT 前向及其中的 FSDP／SP 工作，排除初始 checkpoint／LoRA 加载、文本编码、模型释放、VAE 和 MP4 编码。
-
-`timings.synchronized_generate_s` 覆盖完整 `engine.generate()`，包括请求内组件加载、文本编码与解码，排除 engine 构造和 MP4 编码；它不是 DiT 时延。每 rank 的同步 DiT 时间分别保存，报告所有 rank，并以最慢 rank 作为这次同步阶段观测值，不累加或平均各 rank 来冒充请求时延。
-
-### 4.5 验收新采集
+测试结束并确认日志和输出已持久化后，回到登录节点释放**本次自己申请的**会话：
 
 ```bash
-"$SOL_H3_PYTHON" - "$RUN_ROOT/profile" <<'PY'
-import json
-from pathlib import Path
-import sys
-
-root = Path(sys.argv[1])
-for rank in range(8):
-    folder = root / f"rank{rank}"
-    summary = json.loads((folder / f"summary-rank{rank}.json").read_text())
-    launch = json.loads((folder / "launch-result.json").read_text())
-    assert summary["status"] == launch["status"] == "completed", rank
-    assert summary["expected_forwards"] == summary["completed_forwards"] == summary["attempted_forwards"] == 4, rank
-for index in range(4):
-    path = root / "rank0" / f"operators-rank0-forward{index}.json"
-    item = json.loads(path.read_text())
-    assert item["forward_index"] == index
-    assert any(e["category"] == "kernel" and e["count"] > 0 for e in item["gpu_events"]), index
-print("PASS: all ranks completed four forwards; rank0 has four CUDA windows")
-PY
+detcli shell kill "$SOL_H3_SHELL_ID"
 ```
 
-再完整解码 `profile.mp4`：检查 1344×768、124 帧、24 FPS，视频与音频均非空，方法见部署指南。只有 trace、每 rank 状态、完整输出三者都通过，才把这次采集标为 completed。失败时保留整个目录，不要删掉不完整运行再只汇报成功项。
-
-## 5. 从 trace 读出 DiT 瓶颈
-
-先打开一份前向 trace，观察 CUDA streams、CPU 发射、FSDP all-gather、SP all-to-all 与计算的关系。Chrome trace 可由 [Perfetto UI](https://ui.perfetto.dev/) 打开；工具说明见 [Perfetto 官方文档](https://perfetto.dev/docs/visualization/perfetto-ui)。
-
-下面从 rank 0 的已采前向中提取 GPU kernel 排名，明确将 NCCL 与 memcpy 分开：
-
-```bash
-"$SOL_H3_PYTHON" - "$RUN_ROOT/profile/rank0" <<'PY'
-from collections import defaultdict
-import json
-from pathlib import Path
-import sys
-
-kernels = defaultdict(float)
-other = defaultdict(float)
-files = sorted(Path(sys.argv[1]).glob("operators-rank0-forward*.json"))
-assert files, "No operator artifacts"
-for path in files:
-    for event in json.loads(path.read_text())["gpu_events"]:
-        seconds = event["duration_us"] / 1e6
-        if event["category"] == "kernel" and "nccl" not in event["name"].lower():
-            kernels[event["name"]] += seconds
-        else:
-            other[event["category"] + ("/NCCL" if "nccl" in event["name"].lower() else "")] += seconds
-print("Selected-forward kernel duration SUM, seconds; not wall latency")
-for name, seconds in sorted(kernels.items(), key=lambda item: -item[1])[:30]:
-    print(f"{seconds:.6f}\t{name}")
-print("Other recorded duration sums:", dict(other))
-PY
-```
-
-优先核查 FFN up/down projection、QKV／输出投影、attention kernel、norm／activation／layout，以及这些计算之间的空隙。用 CPU operator／correlation 对应真实 CUDA kernel，不能只看到 `aten::linear` 就把所有时间归入 GEMM。对于 fused kernel，不能在没有内部证据时把一个 kernel 的时间再拆成多个互斥模块。
-
-本包装器使用已有 forward 观察器，没有 native 研究 trace 中的逐模块 `H3_NATIVE/...` 标注。若需要层／模块定位，先使用第 7 节已带标注的 trace；对当前八卡路径扩展标注时只增加观测范围，另存源码身份，不顺便更换算子或调度策略。
-
-## 6. 计时与比较口径
-
-| 指标 | 可回答的问题 | 不能当成 |
-|---|---|---|
-| benchmark `synchronized_denoise_s` | 当前四次去噪及其分布式工作的同步阶段时延 | 纯计算 kernel 时间，或包含加载／VAE 的整请求耗时 |
-| `synchronized_generate_s` | 完整 generate 范围的同步时间 | DiT-only 时延 |
-| trace kernel duration sum | 某组被记录 GPU 事件的累计工作量 | 墙钟时延，或端到端时间占比 |
-| 同一 rank trace 的区间并集 | 该 GPU 上被选事件覆盖的时间 | 多 rank 全局关键路径 |
-| `phases[*].host_wall_s` | 阶段诊断定位 | 保证互斥、同步的 GPU 阶段分解 |
-| allocator 峰值 | 从 recorder 初始化到 finalize 的框架分配峰值，含文本／DiT／VAE | 整机显存总量或纯 DiT 峰值 |
-| API job timestamps | 包含加载、生成、编码的任务总时间 | DiT 算子 profiling |
-
-profile 和 benchmark 必须分开。只采 rank 0 时，其他 rank 的 summary 即使显示 `mode=benchmark`，也属于同一个受 profiling 扰动的运行；不能把它们当作独立干净基准。
-
-kernel、NCCL 和 memcpy 可在不同 stream 重叠，不相加成总时长。若剔除 NCCL／memcpy 后计算占比很大，只能说明计算 kernel 累计时间的构成；同一时刻的通信仍可能影响计算速度。
-
-比较前固定 prompt、seed、步数、分辨率／帧数、权重／LoRA、精度、attention backend、融合／量化、FSDP／SP、offload、缓存和 warmup 策略，并记录 GPU UUID／拓扑、torch／CUDA／驱动身份。当前默认单请求；不要把不同批量、49 步或 A800 的结果拿来解释这次 4090 四步路径。
-
-PyTorch 的 profiler 选项、Chrome trace 导出和内存／栈采集开销见 [PyTorch 2.11 profiler 文档](https://docs.pytorch.org/docs/2.11/profiler.html)。另外，CUDA Event 是 GPU 事件计时机制，其 `elapsed_time` 单位为毫秒；它与本包装器边界同步的 host wall time 不同，见 [CUDA Event 文档](https://docs.pytorch.org/docs/2.11/generated/torch.cuda.Event.html)。
-
-## 7. 已有 native 全优化 DiT 证据
-
-无需新占 GPU，即可先阅读下列已存在的原始 trace 和元数据：
-
-| 路径（均在历史实验根目录下） | 重点文件与范围 |
-|---|---|
-| `native-fullopt-4090-20261031T030218Z/` | `rank0.trace.json.gz`、`loaded-rank0.json`、`observer-rank0.json`；2 卡，四次前向，FP8 输出通信 |
-| `native-fullopt-g4-4090-20261031T045649Z/` | 同类文件；4 卡，四次前向，FP8 输出通信 |
-| `native-compute-4090-20261030T174243Z/` | 同类文件；2 卡，四次前向，BF16 输出通信；约 14 GiB 的目录还含其他中间证据 |
-
-前两个目录的 `loaded-rank0.json` 明确记录 SP2／SP4、`fsdp=false`、20 个常驻 block 与 30 个 offload block；`observer-rank0.json` 记录 `model_forwards=4`、只采 rank 0。文档里的 scope 必须以这些字段为准，不能只看目录名“fullopt”就宣称所有平台上的全部优化都已开启。
-
-`analyze_native_trace_v2.py` 使用 `H3_NATIVE/step...` CPU scopes 和 kernel correlation 做归因，将稀疏路由／统计、稀疏 attention core、FFN、QKV／输出投影等分组。输出 `compute-rank0.json` 中 `fraction_of_compute_kernel_sum` 的分母是计算 kernel 累计时间，排除了 NCCL 和 memcpy，不是请求时延。
-
-需要重新分析时，复制分析脚本到新的目录，链接已有 trace，不覆盖原始结果：
-
-```bash
-export OLD=/labdata2/hwx/sol-h3-8xrtx4090/native-fullopt-4090-20261031T030218Z
-export ANALYSIS="$RUN_ROOT/existing-native-analysis"
-mkdir -p "$ANALYSIS"
-cp "$OLD/analyze_native_trace_v2.py" "$ANALYSIS/"
-ln -s "$OLD/rank0.trace.json.gz" "$ANALYSIS/rank0.trace.json.gz"
-"$SOL_H3_PYTHON" "$ANALYSIS/analyze_native_trace_v2.py" > "$ANALYSIS/analysis.log"
-```
-
-已有研究 driver 依赖自己的 `runtime/`、`native-deps/` 和 `conditioning.pt`，不是通用生产入口；不要移动其中单个文件后直接重跑。下一步若研究官方已优化计算，优先基于这些 trace 定位问题，再设计只改变一个因素的验证，避免把显存适配配置与 native 路径的差异归因于某一项优化。
-
-## 8. 常见问题和后续交接
-
-- `--profile-dir` 报 mode 错误：这是旧参数的适用范围限制；四步使用新包装器，不修改冻结源码绕过判断。
-- 没有 `kernel` 事件：先做第 4.2 节的 CUPTI 检查。CPU-only trace 不计为 GPU profiling 成功。
-- 出现 OOM：保留每 rank 错误和参数。先缩小采集窗口／采样 rank，不擅自改变模型精度、几何或内存策略后继续沿用同一配置名称。
-- 收到 `FileExistsError`：输出目录防止混合请求，换新 `RUN_ROOT`，不要删除尚未检查的旧结果。
-- 某 rank summary 缺失：整次运行未完成；检查 torchrun 日志和 `launch-result.json`，不要只看 rank 0。
-- 在 API 里找不到 profiling 参数：API 的请求 schema 不开放这类控制。本次 profiling 直接从 CLI 启动，避免队列和编码混入 DiT 分析；若 API 正在使用同一组 GPU，先协调停止。
-- Nsight：登录节点未发现 `nsys`／`ncu`。新 GPU 环境内应重新核对工具和权限，不能照抄一条 Nsight 命令就假定采集成功；本交接的主路径使用环境中已有的 torch profiler。
-
-交接时至少保留：源码 revision／哈希、模型与公共环境身份、实际运行命令、prompt hash／seed／几何、GPU UUID／拓扑、每 rank 状态、原始 trace、算子 JSON、成功或失败的日志、输出视频与解码检查。没有同一次运行、同一时钟与真实关键路径依据时，不生成端到端百分比图。
-
-## 9. 本轮清理结果
-
-本轮已完成 61 份唯一权重内容的 SHA256 核验，并去重旧路径的重复存储。四个旧目录和 14 个文本编码器分片路径已改为公共副本软链接。按唯一 inode 的原分配块计，回收约 **135.85 GiB** 重复占用，不重复计算硬链接。另清除五项临时上传／失败 clone／更新暂存文件。
-
-历史 trace、实验 JSON／SQLite、API 验收视频与日志、唯一 LTX／upscaler 权重、公共模型及环境均保留。完整证据见清理回执目录中的 `weights-dedupe.json`、`text-encoder-dedupe.json`、`temporary-cleanup.json`、`cleanup-summary.json` 和 `清理记录.md`。
+接手者首先可直接读取第 3 节两个模板目录中的既有 trace 和验证 JSON；需要新增观测时再申请 GPU，按新 run 目录执行以上步骤。

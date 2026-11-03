@@ -138,19 +138,28 @@
   },
   "profiling_handoff": {
     "date": "2026-11-03",
-    "wrapper": "tools/profile_single_stage.py",
-    "scope": "Single-stage four-forward staged adapter only",
-    "cpu_argument_tests": 3,
-    "latest_cpu_suite_total": 19,
-    "cpu_suite_status": "passed",
-    "documentation_bash_blocks_checked": 7,
-    "cuda_capture_validation": "not_run; original GPU allocation has terminated; no new allocation requested",
-    "numerical_implementation": "Official and frozen adaptation files unchanged",
-    "benchmark_scope": "Synchronized staged denoise body includes FSDP/SP; whole generate recorded separately; both exclude MP4 encoding",
-    "profile_scope": "Selected root forward windows via existing RunInstrumentation; rank0 by default",
-    "server_code_root": "/labdata2/hwx/Sol-H3-Runtime",
-    "cleanup_receipt_root": "/labdata2/hwx/sol-h3-8xrtx4090/cleanup-receipts/20261103-handoff",
-    "duplicate_weight_files_verified": 61,
-    "reclaimed_duplicate_allocated_GiB": 135.85005235671997
+    "document": "docs/PROFILING_HANDOFF.md",
+    "scope": "Server authentication, GPU allocation/queuing, assets, native DiT-only profiling using cached real conditioning and prepared state",
+    "ssh_and_scheduler_authentication": "verified on login node; user tempuser16; credentials not included",
+    "cli_interfaces": "Verified Determined shell start/open/list and user login/whoami",
+    "native_templates": {
+      "2_gpu": "/labdata2/hwx/sol-h3-8xrtx4090/native-fullopt-4090-20261031T030218Z",
+      "4_gpu": "/labdata2/hwx/sol-h3-8xrtx4090/native-fullopt-g4-4090-20261031T045649Z"
+    },
+    "cached_conditioning": "Real prompt_embeds BF16 [537,5120], text_token_tags int64 [537], original prompt; other DiT entry state prepared outside timing and staged in memory",
+    "timing_scope": "Synchronized native denoise loop only; exits before VAE/audio decode/encoding; in-loop communication and offload included",
+    "existing_native_trace_protocol": "One warmup plus one profiled request; not an independent clean benchmark",
+    "documentation_bash_blocks_checked": 10,
+    "embedded_python_blocks_compiled": 2,
+    "new_gpu_execution": false,
+    "new_allocation_requested": false,
+    "separate_staged_wrapper": {
+      "path": "tools/profile_single_stage.py",
+      "cpu_argument_tests": 3,
+      "latest_cpu_suite_total": 19,
+      "cpu_suite_status": "passed",
+      "cuda_capture_validation": "not_run"
+    },
+    "server_code_root": "/labdata2/hwx/Sol-H3-Runtime"
   }
 }

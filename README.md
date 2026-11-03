@@ -9,7 +9,7 @@ LINs Lab 的运行步骤见 [部署与推理指南](docs/LINS_LAB.md)，从取�
 
 在 GPU 服务器运行 `bash serve.sh` 可启动 HTTP 推理服务，按实际配置设置 `--entry`、`--model` 和 `--adapter`。服务提供请求排队、状态查询和视频下载，完整步骤见 [API 服务部署](docs/API.md)。
 
-DiT trace 采集、独立计时和已有研究 trace 的索引见 [profiling 交接](docs/PROFILING_HANDOFF.md)。其中新增四步观察包装器已通过 CPU 检查，CUDA 采集接入仍待 GPU 验收。
+服务器认证、GPU 申请与排队、环境和权重位置，以及暂存非 DiT 输入后只测 DiT 的流程，见 [profiling 交接](docs/PROFILING_HANDOFF.md)。交接使用服务器上已保留的 native 双卡／四卡研究驱动与真实条件缓存；这些实验资产独立于仓库。`tools/profile_single_stage.py` 是另一条分阶段适配路径的观察包装器，目前仅通过 CPU 检查。
 
 ## LINs Lab 服务器配置
 

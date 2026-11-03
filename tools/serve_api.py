@@ -246,8 +246,6 @@ def main():
     parser.add_argument("--launch-arg", action="append", default=[], help="Fixed extra launcher argument; use --launch-arg=--FLAG")
     args = parser.parse_args()
     key = os.environ.get("SOL_H3_API_KEY", "")
-    if args.host not in ("127.0.0.1", "localhost", "::1") and not key:
-        parser.error("Set SOL_H3_API_KEY before binding a non-loopback address")
     if args.capacity < 1 or not args.entry.resolve().is_file():
         parser.error("Require capacity>=1 and an existing launch script")
     command = ["bash", str(args.entry.resolve()), "--model", args.model, "--adapter", args.adapter] + args.launch_arg

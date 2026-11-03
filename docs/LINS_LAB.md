@@ -87,7 +87,7 @@ PY
 
 ### 5.1 启动服务
 
-在同一个终端中执行。首次启动会生成密钥，后续启动复用同一个密钥文件：
+在同一个终端中执行，默认无需密钥：
 
 ```bash
 cd "$SOL_H3_WORK/repo"
@@ -95,10 +95,7 @@ test -f serve.sh
 export SOL_H3_API_DATA="$SOL_H3_WORK/api-data"
 export SOL_H3_API_URL=http://127.0.0.1:8000
 
-if [ ! -s "$SOL_H3_WORK/api.key" ]; then
-  (umask 077; "$SOL_H3_PYTHON" -c 'import secrets; print(secrets.token_urlsafe(32))' > "$SOL_H3_WORK/api.key")
-fi
-export SOL_H3_API_KEY="$(cat "$SOL_H3_WORK/api.key")"
+unset SOL_H3_API_KEY
 
 nohup bash serve.sh \
   --host 127.0.0.1 --port 8000 \
@@ -113,7 +110,7 @@ echo $! > "$SOL_H3_WORK/logs/api.pid"
 
 服务监听当前 GPU 环境的 `127.0.0.1:8000`。`--capacity 16` 表示最多接收 16 个尚未结束的任务，包含正在运行的任务；队列满时返回 HTTP 429。不要在同一组 GPU 上同时运行第 3 节的命令和 API 推理，或重复启动多个服务实例。
 
-需要监听服务器其他网卡时，将 `--host` 改为 `0.0.0.0`，保留密钥设置；容器端口的发布方式按服务器运行环境配置。
+需要监听服务器其他网卡时，将 `--host` 改为 `0.0.0.0`，同样无需设置密钥；容器端口的发布方式按服务器运行环境配置。
 
 查看服务日志和健康状态：
 
@@ -128,7 +125,6 @@ curl -fsS "$SOL_H3_API_URL/health"
 
 ```bash
 JOB_JSON=$(curl -fsS "$SOL_H3_API_URL/v1/jobs" \
-  -H "Authorization: Bearer $SOL_H3_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"prompt":"An adult dancer performs energetic choreography on a brightly lit stage.","duration":5,"seed":0}')
 printf '%s\n' "$JOB_JSON"
@@ -146,11 +142,9 @@ JOB_ID=$(printf '%s' "$JOB_JSON" | "$SOL_H3_PYTHON" -c 'import json,sys; print(j
 ### 5.3 查询状态和日志
 
 ```bash
-curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID" \
-  -H "Authorization: Bearer $SOL_H3_API_KEY"
+curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID"
 
-curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/log" \
-  -H "Authorization: Bearer $SOL_H3_API_KEY"
+curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/log"
 ```
 
 任务依次处于 `queued`（排队）、`running`（生成中），最终为 `completed`（完成）或 `failed`（失败）。重复查询状态，等到 `completed` 后再下载。失败时查看返回的 `error` 和任务日志；日志接口返回最后 64 KiB，完整日志保存在 `$SOL_H3_API_DATA/$JOB_ID/inference.log`。
@@ -162,7 +156,6 @@ curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/log" \
 ```bash
 export SOL_H3_OUTPUT="$SOL_H3_WORK/outputs/$JOB_ID.mp4"
 curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/video" \
-  -H "Authorization: Bearer $SOL_H3_API_KEY" \
   -o "$SOL_H3_OUTPUT"
 ls -lh "$SOL_H3_OUTPUT"
 ```
@@ -177,14 +170,13 @@ ls -lh "$SOL_H3_OUTPUT"
 kill -TERM "$(cat "$SOL_H3_WORK/logs/api.pid")"
 ```
 
-停止服务会终止当前推理，未开始的任务仍保存在队列中。重新执行第 5.1 节，使用相同的数据目录、权重配置和密钥文件后，排队任务会继续执行；被中断的任务标记为 `failed`，需要重新提交。
+停止服务会终止当前推理，未开始的任务仍保存在队列中。重新执行第 5.1 节，使用相同的数据目录和权重配置后，排队任务会继续执行；被中断的任务标记为 `failed`，需要重新提交。
 
 换一个服务器终端使用已运行的服务时，先重新执行第 1、2 节的环境变量设置，再执行：
 
 ```bash
 export SOL_H3_API_DATA="$SOL_H3_WORK/api-data"
 export SOL_H3_API_URL=http://127.0.0.1:8000
-export SOL_H3_API_KEY="$(cat "$SOL_H3_WORK/api.key")"
 ```
 
 随后使用已有的任务 ID 查询或下载，不要再次执行启动命令。GPU 分配结束或容器退出时，服务也会停止，`nohup` 不会延长 GPU 分配。

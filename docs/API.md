@@ -16,7 +16,7 @@ API 使用 Python 标准库，无需向公共环境安装额外依赖。下述�
 
 ```bash
 cd "$SOL_H3_WORK/repo"
-export SOL_H3_API_KEY="$("$SOL_H3_PYTHON" -c 'import secrets; print(secrets.token_urlsafe(32))')"
+unset SOL_H3_API_KEY
 export SOL_H3_API_DATA="$SOL_H3_WORK/api-data"
 
 nohup bash serve.sh \
@@ -30,9 +30,9 @@ nohup bash serve.sh \
 echo $! > "$SOL_H3_WORK/logs/api.pid"
 ```
 
-`--capacity 16` 表示最多接收 16 个尚未结束的任务，包含正在运行的一个任务。超过容量时返回 HTTP 429。请保留 `SOL_H3_API_KEY`，后续请求使用相同值；它不会被写入任务记录。
+`--capacity 16` 表示最多接收 16 个尚未结束的任务，包含正在运行的一个任务。超过容量时返回 HTTP 429。默认不设置密钥，调用时无需 Authorization 请求头。
 
-默认监听 GPU 服务器（或 GPU 容器）的 `127.0.0.1:8000`。需要监听服务器其他网卡时，将地址改为 `0.0.0.0`；该模式必须设置 `SOL_H3_API_KEY`。容器的端口发布方式由服务器运行环境决定，不影响 API 的启动方式。
+默认监听 GPU 服务器（或 GPU 容器）的 `127.0.0.1:8000`。需要监听服务器其他网卡时，将地址改为 `0.0.0.0`，同样无需设置密钥。容器的端口发布方式由服务器运行环境决定，不影响 API 的启动方式。
 
 ```bash
 export SOL_H3_API_URL=http://127.0.0.1:8000
@@ -41,11 +41,12 @@ curl -fsS "$SOL_H3_API_URL/health"
 
 上面的健康检查也在 GPU 服务器内执行。`/health` 表示 API 进程可响应；任务启动时仍会执行推理脚本自带的环境、权重和 GPU 检查。
 
+如需自行启用鉴权，可在启动前设置 `SOL_H3_API_KEY`；此时请求需附带 `Authorization: Bearer <密钥>`。本文命令默认不启用鉴权。
+
 ## 3. 提交任务
 
 ```bash
 JOB_JSON=$(curl -fsS "$SOL_H3_API_URL/v1/jobs" \
-  -H "Authorization: Bearer $SOL_H3_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"prompt":"An adult dancer performs energetic choreography on a brightly lit stage.","duration":5,"seed":0}')
 printf '%s\n' "$JOB_JSON"
@@ -65,11 +66,9 @@ JOB_ID=$(printf '%s' "$JOB_JSON" | "$SOL_H3_PYTHON" -c 'import json,sys; print(j
 ## 4. 查询状态与下载
 
 ```bash
-curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID" \
-  -H "Authorization: Bearer $SOL_H3_API_KEY"
+curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID"
 
-curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/log" \
-  -H "Authorization: Bearer $SOL_H3_API_KEY"
+curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/log"
 ```
 
 任务状态为 `queued`、`running`、`completed` 或 `failed`。`failed` 的具体原因见返回的 `error` 和任务日志；日志接口返回最后 64 KiB。`completed` 表示推理进程成功退出且生成了非空视频，完整媒体解码可按部署指南第 4 节检查。
@@ -78,7 +77,6 @@ curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/log" \
 
 ```bash
 curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/video" \
-  -H "Authorization: Bearer $SOL_H3_API_KEY" \
   -o "$SOL_H3_WORK/outputs/$JOB_ID.mp4"
 ```
 
@@ -90,7 +88,7 @@ curl -fsS "$SOL_H3_API_URL/v1/jobs/$JOB_ID/video" \
 kill -TERM "$(cat "$SOL_H3_WORK/logs/api.pid")"
 ```
 
-停止服务会终止当前推理任务，未开始的请求保留在磁盘队列中。使用相同 `--data-dir` 重启后，排队请求按原顺序继续，已中断的任务标记为 `failed`，由客户端决定是否重新提交。重启时沿用相同入口、权重配置和 API 密钥。
+停止服务会终止当前推理任务，未开始的请求保留在磁盘队列中。使用相同 `--data-dir` 重启后，排队请求按原顺序继续，已中断的任务标记为 `failed`，由客户端决定是否重新提交。重启时沿用相同入口和权重配置。
 
 一个数据目录只允许一个服务进程。推理子进程也持有目录锁，服务异常退出后，若原推理进程仍存活，新的服务会拒绝争用；应先等待其退出或停止原进程组。GPU 资源分配结束或容器退出时，API 随之停止；`nohup` 不会延长 GPU 分配。
 
@@ -102,10 +100,11 @@ kill -TERM "$(cat "$SOL_H3_WORK/logs/api.pid")"
 
 ## H800 80 GiB 单卡
 
-在 Slurm 分配的一张 H800 上使用 `scripts/run_h800_80g_1gpu.sh`。先设置当前服务器上实际的 `SOL_H3_PYTHON`、`SOL_H3_MODEL`、`SOL_H3_ADAPTER`、`SOL_H3_API_KEY` 和 `SOL_H3_API_DATA`；这些路径与 LINs Lab 的公共路径可以不同。模型必须完整位于计算节点可见的存储上，不能在请求处理中下载权重。
+在 Slurm 分配的一张 H800 上使用 `scripts/run_h800_80g_1gpu.sh`。先设置当前服务器上实际的 `SOL_H3_PYTHON`、`SOL_H3_MODEL`、`SOL_H3_ADAPTER` 和 `SOL_H3_API_DATA`；这些路径与 LINs Lab 的公共路径可以不同。模型必须完整位于计算节点可见的存储上，不能在请求处理中下载权重。
 
 ```bash
 cd /path/to/Sol-H3-Runtime
+unset SOL_H3_API_KEY
 bash serve.sh \
   --host 0.0.0.0 --port 18080 \
   --entry scripts/run_h800_80g_1gpu.sh \
@@ -115,6 +114,8 @@ bash serve.sh \
 
 使用 `sbatch` 托管此命令可在退出终端后继续提供服务；申请 `--gres=gpu:1`，并根据站点配置设置 account、partition 和运行时限。该入口启用分阶段加载和 AdaLN 预计算，保持单卡 dense BF16 路径；不调用八卡启动器，不要求 CUDA13 的 BSA 组件。
 
-客户端在服务器网络内访问 `http://计算节点名:18080`，提交、排队、鉴权、查询和下载接口与上文一致。GPU 分配结束时服务停止；`/health` 表示 HTTP 工作线程可用，实际生成是否成功以任务结果及媒体检查为准。
+客户端在服务器网络内访问 `http://计算节点名:18080`，提交、排队、查询和下载接口与上文一致，无需密钥。GPU 分配结束时服务停止；`/health` 表示 HTTP 工作线程可用，实际生成是否成功以任务结果及媒体检查为准。
 
 2026-11-03 已在一张 H800 80 GiB 上通过真实 API 请求：异步提交、状态查询、鉴权及 HTTP 视频下载均正常，输出的 1344×768、124 帧、24 FPS 视频及音频完整解码通过。此配置使用 FastH3 四次去噪和分阶段加载；本次为功能验收，不是独立 DiT benchmark。
+
+随后已切换为免密钥服务，验证无 Authorization 请求头的状态查询、日志及已有视频下载均返回 HTTP 200；下载文件 SHA256 与原视频一致。免密钥提交、执行和下载流程另通过 CPU 模拟推理测试。

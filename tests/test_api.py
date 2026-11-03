@@ -1,6 +1,10 @@
 """HTTP and queue lifecycle checks using a CPU-only stand-in launcher."""
 import importlib.util
 import json
+import os
+import select
+import shlex
+import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -83,6 +87,36 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(json.loads(self.request(f"/v1/jobs/{first}")[1])["status"], "completed")
         self.assertEqual(self.request(f"/v1/jobs/{first}/log")[0], 200)
         self.assertFalse((self.root / "should-not-exist").exists())
+
+    def test_cli_non_loopback_without_key(self):
+        entry = self.root / "fake.sh"
+        entry.write_text(f'exec {shlex.quote(sys.executable)} {shlex.quote(str(self.launch))} "$@"\n')
+        env = dict(os.environ, SOL_H3_API_KEY="")
+        process = subprocess.Popen(
+            [sys.executable, str(ROOT / "tools/serve_api.py"), "--host", "0.0.0.0",
+             "--port", "0", "--entry", str(entry), "--data-dir", str(self.root / "keyless")],
+            env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            self.assertTrue(select.select([process.stdout], [], [], 5)[0], "API startup timed out")
+            line = process.stdout.readline()
+            self.assertIn("API listening on 0.0.0.0:", line)
+            port = int(line.split("0.0.0.0:")[1].split(";")[0])
+            self.url = f"http://127.0.0.1:{port}"
+            code, body = self.request("/v1/jobs", {"prompt": "keyless"}, False)
+            self.assertEqual(code, 202)
+            job_id = json.loads(body)["id"]
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                code, body = self.request(f"/v1/jobs/{job_id}", authenticated=False)
+                self.assertEqual(code, 200)
+                if json.loads(body)["status"] == "completed":
+                    break
+                time.sleep(0.02)
+            self.assertEqual(self.request(f"/v1/jobs/{job_id}/video", authenticated=False),
+                             (200, b"keyless"))
+        finally:
+            process.terminate()
+            process.communicate(timeout=10)
 
     def test_validation_failure_and_single_instance(self):
         for body in [{"prompt": ""}, {"prompt": "x", "seed": True},

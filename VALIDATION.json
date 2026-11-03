@@ -232,6 +232,22 @@
     "timing_scope": "One API job, including process launch, model loading, generation and encoding; not DiT-only",
     "quality_scope": "Full video/audio decode and basic nonconstant decoded-sample check; no perceptual comparison or speedup benchmark",
     "optional_dependency_scope": "Single-GPU dense route omits unused CUDA13 cuDNN frontend BSA extras",
-    "api_documentation_bash_blocks_checked": 7
+    "api_documentation_bash_blocks_checked": 7,
+    "keyless_api_update": {
+      "status": "passed",
+      "date": "2026-11-03",
+      "authentication": "none",
+      "no_authorization_header": true,
+      "health_http": 200,
+      "existing_completed_job_status_http": 200,
+      "existing_job_log_http": 200,
+      "existing_video_download_http": 200,
+      "invalid_prompt_post_http": 400,
+      "video_sha256": "46e12fd481d0a2fdc248b01795ab044af57daf364d0fecb3bb06671c9d944039",
+      "new_gpu_generation_run": false,
+      "cpu_standin_keyless_submission_status_download": "passed",
+      "cpu_api_tests": 5,
+      "checked_at_utc": "2026-11-03T05:36:20.616132+00:00"
+    }
   }
 }

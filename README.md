@@ -7,7 +7,7 @@
 
 LINs Lab 的运行步骤见 [部署与推理指南](docs/LINS_LAB.md)，从取得 GPU 后开始。
 
-在 GPU 服务器运行 `bash serve.sh` 可启动 HTTP 推理服务，按实际配置设置 `--entry`、`--model` 和 `--adapter`。服务提供请求排队、状态查询和视频下载，完整步骤见 [API 服务部署](docs/API.md)。
+在 GPU 服务器运行 `bash serve.sh` 可启动 HTTP 推理服务，按实际配置设置 `--entry`、`--model` 和 `--adapter`。H800 单卡入口默认启动常驻推理后端，在服务初始化时加载模型，后续请求直接复用；服务提供排队、状态查询和视频下载，完整步骤见 [API 服务部署](docs/API.md)。
 
 LINs Lab（4090／Determined）的认证、GPU 申请与排队、环境和权重位置，以及暂存非 DiT 输入后只测 DiT 的流程，见 [profiling 交接](docs/PROFILING_HANDOFF.md)。交接使用服务器上已保留的 native 双卡／四卡研究驱动与真实条件缓存；这些实验资产独立于仓库。`tools/profile_single_stage.py` 是另一条分阶段适配路径的观察包装器，目前仅通过 CPU 检查。
 
@@ -74,7 +74,7 @@ export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
 
 入口为 `scripts/run_h800_80g_1gpu.sh`，复用现有分阶段加载实现。它使用 FastH3 四次前向、dense Flash SDPA、BF16 计算、AdaLN 预计算和原生算子融合；文本编码、DiT、视频 VAE 和音频 VAE 分阶段执行。单卡不进行 FSDP 权重分片或 SP 通信。原样官方源码与冻结适配文件均未修改。
 
-对应环境依赖见 `requirements-h800.txt`，采用 PyTorch 2.10.0+cu128，省略此路径不用的 CUDA13 BSA 依赖。准备好模型和环境、取得一张 H800 后，可用该入口直接推理，或传给 `serve.sh` 启动 API；具体命令见 [H800 API](docs/API.md#h800-80-gib-单卡)。API 进程持续运行，生成任务依次启动独立推理进程，每个请求重新加载模型。
+对应环境依赖见 `requirements-h800.txt`，采用 PyTorch 2.10.0+cu128，省略此路径不用的 CUDA13 BSA 依赖。准备好模型和环境、取得一张 H800 后，可用该入口直接推理，或传给 `serve.sh` 启动 API；具体命令见 [H800 API](docs/API.md#h800-80-gib-单卡)。API 与推理引擎持续运行，启动时加载一次权重，合并 LoRA 并预计算 AdaLN。DiT 与 VAE 保留在 GPU，文本编码器保留在 CPU，编码时按层上卡；后续请求复用相同模型实例。
 
 ## 代码组织
 

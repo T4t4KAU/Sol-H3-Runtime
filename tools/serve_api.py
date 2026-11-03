@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One persistent FIFO queue around an existing SOL-H3 launch script (Linux)."""
+"""FIFO SOL-H3 API with a resident H800 engine or a compatibility CLI backend."""
 from __future__ import annotations
 
 import argparse
@@ -15,6 +15,7 @@ import signal
 import subprocess
 import threading
 import time
+import traceback
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
@@ -23,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Jobs:
-    def __init__(self, directory, command, cwd, capacity=16):
+    def __init__(self, directory, command, cwd, capacity=16, backend_factory=None):
         self.directory = Path(directory).resolve()
         self.directory.mkdir(parents=True, exist_ok=True)
         self.instance_lock = (self.directory / "server.lock").open("a")
@@ -37,6 +38,12 @@ class Jobs:
         self.pending = queue.Queue()
         self.stop = threading.Event()
         self.process = None
+        self.backend_factory = backend_factory
+        self.backend = None
+        self.startup_error = None
+        self.ready = threading.Event()
+        if backend_factory is None:
+            self.ready.set()
         self.records = {}
         for path in sorted(self.directory.glob("*/job.json")):
             item = json.loads(path.read_text())
@@ -60,8 +67,8 @@ class Jobs:
 
     def submit(self, parameters):
         with self.lock:
-            if self.stop.is_set():
-                raise RuntimeError("Service is stopping")
+            if self.stop.is_set() or self.startup_error:
+                raise RuntimeError("Service is stopping or unavailable")
             if sum(x["status"] in ("queued", "running") for x in self.records.values()) >= self.capacity:
                 raise queue.Full
             item = dict(id=uuid.uuid4().hex, status="queued", created_at=time.time(),
@@ -81,7 +88,34 @@ class Jobs:
                 item["video_url"] = f"/v1/jobs/{job_id}/video"
             return item
 
+    def health(self):
+        ready = self.ready.is_set() and self.worker.is_alive() and not self.stop.is_set()
+        result = dict(status="ok" if ready else ("failed" if self.startup_error else "loading"),
+                      concurrency=1, backend="resident" if self.backend_factory else "subprocess")
+        if self.startup_error:
+            result["error"] = self.startup_error
+        if self.backend is not None:
+            result.update(self.backend.health())
+        if self.backend_factory is None:
+            result["scope"] = "API process only; GPU readiness is checked per task"
+        return ready, result
+
     def run(self):
+        try:
+            if self.backend_factory is not None:
+                self.backend = self.backend_factory()
+                self.ready.set()
+            self._run_jobs()
+        except Exception as exc:
+            self.startup_error = f"{type(exc).__name__}: {exc}"
+            print(f"SOL-H3 worker failed: {self.startup_error}", flush=True)
+            traceback.print_exc()
+        finally:
+            self.ready.clear()
+            if self.backend is not None:
+                self.backend.close()
+
+    def _run_jobs(self):
         while not self.stop.is_set():
             try:
                 job_id = self.pending.get(timeout=0.2)
@@ -101,25 +135,32 @@ class Jobs:
                 self.save(item)
             try:
                 with (folder / "inference.log").open("wb") as log:
-                    with self.lock:
-                        if self.stop.is_set():
-                            raise RuntimeError("Service stopped before inference launch")
-                        self.process = subprocess.Popen(command, cwd=self.cwd, stdin=subprocess.DEVNULL,
-                                                        stdout=log, stderr=subprocess.STDOUT,
-                                                        start_new_session=True,
-                                                        pass_fds=(self.instance_lock.fileno(),))
-                    code = self.process.wait()
+                    details = {}
+                    if self.backend is not None:
+                        details = self.backend.generate(args, output, log)
+                        code = 0
+                    else:
+                        with self.lock:
+                            if self.stop.is_set():
+                                raise RuntimeError("Service stopped before inference launch")
+                            self.process = subprocess.Popen(command, cwd=self.cwd, stdin=subprocess.DEVNULL,
+                                                            stdout=log, stderr=subprocess.STDOUT,
+                                                            start_new_session=True,
+                                                            pass_fds=(self.instance_lock.fileno(),))
+                        code = self.process.wait()
                 if code != 0:
                     raise RuntimeError(f"Inference exited with code {code}; see task log")
                 if not output.is_file() or output.stat().st_size == 0:
                     raise RuntimeError("Inference did not produce a video")
-                result = dict(status="completed", video_bytes=output.stat().st_size, error=None)
+                result = dict(status="completed", video_bytes=output.stat().st_size, error=None, **details)
             except Exception as exc:
                 result = dict(status="failed", error=str(exc))
             with self.lock:
                 self.process = None
                 item.update(result, finished_at=time.time())
                 self.save(item)
+            if self.backend is not None and self.backend.fatal_error:
+                raise RuntimeError(self.backend.fatal_error)
 
     def close(self):
         self.stop.set()
@@ -196,9 +237,8 @@ def handler(jobs, api_key):
         def do_GET(self):
             path = urlsplit(self.path).path
             if path == "/health":
-                ready = jobs.worker.is_alive() and not jobs.stop.is_set()
-                return self.reply(200 if ready else 503, {"status": "ok" if ready else "unavailable", "concurrency": 1,
-                                        "scope": "API process only; GPU readiness is checked per task"})
+                ready, health = jobs.health()
+                return self.reply(200 if ready else 503, health)
             if not self.authorized():
                 return
             match = re.fullmatch(r"/v1/jobs/([a-f0-9]{32})(?:/(video|log))?", path)
@@ -239,6 +279,8 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--entry", type=Path, default=ROOT / "run.sh")
+    parser.add_argument("--backend", choices=("auto", "h800-resident", "subprocess"), default="auto",
+                        help="auto uses the resident engine for the single-H800 entry")
     parser.add_argument("--model", default=os.environ.get("SOL_H3_MODEL", "/Datasets/public_models/SOL-H3/MiniMax-H3"))
     parser.add_argument("--adapter", default=os.environ.get("SOL_H3_ADAPTER", "/Datasets/public_models/SOL-H3/FastH3-4-step-Preview-v1-LoRA/dense-datafree/adapter_model.safetensors"))
     parser.add_argument("--data-dir", type=Path, default=Path.home() / "sol-h3-api")
@@ -249,7 +291,13 @@ def main():
     if args.capacity < 1 or not args.entry.resolve().is_file():
         parser.error("Require capacity>=1 and an existing launch script")
     command = ["bash", str(args.entry.resolve()), "--model", args.model, "--adapter", args.adapter] + args.launch_arg
-    jobs = Jobs(args.data_dir, command, ROOT, args.capacity)
+    backend_factory = None
+    if args.backend == "h800-resident" or (args.backend == "auto" and args.entry.name == "run_h800_80g_1gpu.sh"):
+        if args.launch_arg:
+            parser.error("--launch-arg is for the subprocess backend; the resident H800 profile is fixed")
+        from resident_h800 import H800ResidentBackend
+        backend_factory = lambda: H800ResidentBackend(args.model, args.adapter)
+    jobs = Jobs(args.data_dir, command, ROOT, args.capacity, backend_factory=backend_factory)
     server = None
     try:
         server = ThreadingHTTPServer((args.host, args.port), handler(jobs, key))

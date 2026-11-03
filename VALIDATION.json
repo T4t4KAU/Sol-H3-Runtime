@@ -249,5 +249,86 @@
       "cpu_api_tests": 5,
       "checked_at_utc": "2026-11-03T05:36:20.616132+00:00"
     }
+  },
+  "h800_resident_api": {
+    "date": "2026-11-03",
+    "status": "passed",
+    "backend": "tools/resident_h800.py",
+    "backend_sha256": "681d99498d32bd9d82bbecca00d01905b339904adfc4fa005c77a469a67b6b8b",
+    "api_cpu_tests": 8,
+    "authentication": "none",
+    "profile": {
+      "gpu": "H800 80 GiB",
+      "gpu_count": 1,
+      "compute": "BF16",
+      "attention": "dense Flash SDPA",
+      "dit_forwards": 4,
+      "adaln_precompute": true,
+      "kernel_fusions": true,
+      "placement": "DiT and VAEs on GPU; text encoder retained on CPU with leaf offload"
+    },
+    "startup_s": 275.5893309842795,
+    "model_load_count": 1,
+    "component_load_counts": {
+      "transformer": 1,
+      "text_encoder": 1,
+      "vae": 1,
+      "audio_vae": 1
+    },
+    "requests_completed": 2,
+    "checks": {
+      "same_worker_pid": true,
+      "same_model_instance": true,
+      "same_component_objects": true,
+      "load_count_stayed_one": true,
+      "fifo": true,
+      "full_video_and_audio_decode": true,
+      "no_api_key": true
+    },
+    "startup_cuda_allocated_bytes": 51737759232,
+    "after_two_requests_cuda_allocated_bytes": 52000663040,
+    "requests": [
+      {
+        "id": "f02d6742418b45f78f99d0d0cb560cb7",
+        "seed": 0,
+        "request_index": 1,
+        "request_wall_s": 106.92857998423278,
+        "generation_s": 105.28542947210371,
+        "encoding_s": 1.4853429067879915,
+        "cuda_peak_allocated_bytes": 57477203968,
+        "media": {
+          "bytes": 3867253,
+          "sha256": "49b062acd755946fb40dab88d50da302f7c3aab2124bd44d243ed9f9ec1773d1",
+          "width": 1344,
+          "height": 768,
+          "fps": 24.0,
+          "video_frames": 124,
+          "audio_frames": 163
+        }
+      },
+      {
+        "id": "900ebaf30e5b4165b3d3da29f95b65b5",
+        "seed": 1,
+        "request_index": 2,
+        "request_wall_s": 62.51846469286829,
+        "generation_s": 60.74181661196053,
+        "encoding_s": 1.6177039528265595,
+        "cuda_peak_allocated_bytes": 57739690496,
+        "media": {
+          "bytes": 6004537,
+          "sha256": "731fa3586a5baac0260e283d02daf023aaf185efdac92f7e3af94697bc27740d",
+          "width": 1344,
+          "height": 768,
+          "fps": 24.0,
+          "video_frames": 124,
+          "audio_frames": 163
+        }
+      }
+    ],
+    "timing_scope": "Two functional API requests with different prompts/seeds; generation and encoding; startup excluded. Read-only debugger inspections overlapped the first request; not a speedup benchmark.",
+    "source_integrity": {
+      "official_files_unchanged": 82,
+      "frozen_adaptation_files_unchanged": 100
+    }
   }
 }

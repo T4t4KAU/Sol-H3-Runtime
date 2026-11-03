@@ -11,6 +11,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -117,6 +118,67 @@ class ApiTests(unittest.TestCase):
         finally:
             process.terminate()
             process.communicate(timeout=10)
+
+    def test_resident_load_once_readiness_and_fifo_without_child_process(self):
+        self.jobs.close()
+        gate = threading.Event()
+        loads = []
+        closed = []
+        class Backend:
+            fatal_error = None
+            def health(inner):
+                return dict(model_load_count=1, model_instance_id="same-engine")
+            def generate(inner, parameters, output, log):
+                time.sleep(0.1)
+                output.write_bytes(parameters["prompt"].encode())
+                return dict(model_load_count=1, model_instance_id="same-engine", worker_pid=os.getpid())
+            def close(inner):
+                closed.append(True)
+        def factory():
+            gate.wait(5)
+            loads.append(True)
+            return Backend()
+        self.jobs = api.Jobs(self.root / "resident", [], self.root, 2, backend_factory=factory)
+        self.http.RequestHandlerClass = api.handler(self.jobs, "")
+        self.assertEqual(self.request("/health", authenticated=False)[0], 503)
+        gate.set()
+        self.assertTrue(self.jobs.ready.wait(5))
+        code, body = self.request("/health", authenticated=False)
+        self.assertEqual(code, 200)
+        self.assertEqual(json.loads(body)["model_load_count"], 1)
+        with patch.object(api.subprocess, "Popen", side_effect=AssertionError("Resident request spawned a child")):
+            ids = [json.loads(self.request("/v1/jobs", {"prompt": prompt}, False)[1])["id"]
+                   for prompt in ("first", "second")]
+            records = [self.finished(job_id) for job_id in ids]
+        self.assertEqual(loads, [True])
+        self.assertLessEqual(records[0]["finished_at"], records[1]["started_at"])
+        for item, prompt in zip(records, ("first", "second")):
+            self.assertEqual(item["status"], "completed")
+            self.assertEqual(item["model_instance_id"], "same-engine")
+            self.assertEqual(item["worker_pid"], os.getpid())
+            self.assertEqual(self.request(f"/v1/jobs/{item['id']}/video", authenticated=False),
+                             (200, prompt.encode()))
+        self.jobs.close()
+        self.assertEqual(closed, [True])
+
+    def test_resident_startup_failure_is_unready_and_rejects_jobs(self):
+        self.jobs.close()
+        def factory():
+            raise RuntimeError("model load failed")
+        self.jobs = api.Jobs(self.root / "bad-resident", [], self.root, backend_factory=factory)
+        self.http.RequestHandlerClass = api.handler(self.jobs, "")
+        self.jobs.worker.join(timeout=5)
+        code, body = self.request("/health", authenticated=False)
+        self.assertEqual(code, 503)
+        self.assertIn("model load failed", json.loads(body)["error"])
+        self.assertEqual(self.request("/v1/jobs", {"prompt": "hello"}, False)[0], 503)
+
+    def test_resident_rejects_subprocess_launch_overrides(self):
+        result = subprocess.run([sys.executable, str(ROOT / "tools/serve_api.py"),
+            "--backend", "h800-resident", "--launch-arg=--no-adaln-precompute"],
+            capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("resident H800 profile is fixed", result.stderr)
 
     def test_validation_failure_and_single_instance(self):
         for body in [{"prompt": ""}, {"prompt": "x", "seed": True},

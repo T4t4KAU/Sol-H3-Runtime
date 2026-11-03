@@ -161,5 +161,77 @@
       "cuda_capture_validation": "not_run"
     },
     "server_code_root": "/labdata2/hwx/Sol-H3-Runtime"
+  },
+  "h800_single_gpu_api": {
+    "date": "2026-11-03",
+    "status": "passed_real_api_generation_and_media_decode",
+    "entry": "scripts/run_h800_80g_1gpu.sh",
+    "requirements": "requirements-h800.txt",
+    "gpu_count": 1,
+    "gpu_model": "NVIDIA H800 80 GiB",
+    "capability": [
+      9,
+      0
+    ],
+    "driver": "555.42.02",
+    "python": "3.12.4",
+    "torch": "2.10.0+cu128",
+    "triton": "3.6.0",
+    "diffusers_revision": "abc5e9bf71fd38f53cd471bc3acaa84bc5ecbfdc",
+    "profile": {
+      "mode": "single-stage",
+      "dit_forwards": 4,
+      "compute": "BF16",
+      "attention": "dense Flash SDPA",
+      "staged_loading": true,
+      "adaln_precompute": true,
+      "kernel_fusions": true,
+      "fsdp_degree": 1,
+      "ulysses_degree": 1,
+      "weight_sharding": false,
+      "sp_communication": false,
+      "parallel_vae": false,
+      "vae_compile_mode": "eager",
+      "vae_tile_size": 256
+    },
+    "source_integrity": {
+      "official_files_unchanged": 82,
+      "frozen_adaptation_files_unchanged": 100
+    },
+    "model_revision": "42ed227ee7df40d41602854ae760620d6eb651fe",
+    "adapter_revision": "f509e629374cac104e7f62daecce6d1488a3041d",
+    "assets": {
+      "files": 62,
+      "total_bytes": 145536769163,
+      "large_files_sha256_verified": 33
+    },
+    "preflight": {
+      "nccl_one_rank": "passed",
+      "dcp_meta_to_cuda_and_exact_values": "passed",
+      "launcher_cpu_tests": 11,
+      "gpu_rejection_blocks_worker_dispatch": "passed"
+    },
+    "api": {
+      "health_http": 200,
+      "unauthenticated_job_query_http": 401,
+      "authenticated_submit_http": 202,
+      "status_query_http": 200,
+      "video_download_http": 200,
+      "model_lifetime": "New inference process and model load for each job; persistent FIFO API process"
+    },
+    "media": {
+      "width": 1344,
+      "height": 768,
+      "fps": 24.0,
+      "video_frames": 124,
+      "audio_frames": 163,
+      "video_bytes": 3873139,
+      "sha256": "46e12fd481d0a2fdc248b01795ab044af57daf364d0fecb3bb06671c9d944039"
+    },
+    "single_functional_request_wall_s": 360.7901704311371,
+    "timing_scope": "One API job, including process launch, model loading, generation and encoding; not DiT-only",
+    "quality_scope": "Full video/audio decode and basic nonconstant decoded-sample check; no perceptual comparison or speedup benchmark",
+    "optional_dependency_scope": "Single-GPU dense route omits unused CUDA13 cuDNN frontend BSA extras",
+    "api_documentation_bash_blocks_checked": 7
   }
 }

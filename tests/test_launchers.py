@@ -11,6 +11,34 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LauncherTests(unittest.TestCase):
+    def test_h800_uses_one_worker_and_staged_dense(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output, env = self.recorder(Path(directory))
+            prompt = "Literal $(no_command) and spaces"
+            result = subprocess.run(
+                ["bash", str(ROOT / "scripts/run_h800_80g_1gpu.sh"),
+                 "--prompt", prompt], env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            args = json.loads(output.read_text())["args"]
+            self.assertIn("--nproc-per-node=1", args)
+            for key, value in [("--fsdp-degree", "1"), ("--ulysses-degree", "1"),
+                               ("--attention-backend", "dense"), ("--mode", "single-stage")]:
+                self.assertEqual(args[args.index(key) + 1], value)
+            self.assertIn("--staged-loading", args)
+            self.assertNotIn("--no-adaln-precompute", args)
+            self.assertNotIn("--text-fsdp", args)
+            self.assertEqual(args[args.index("--prompt") + 1], prompt)
+
+    def test_h800_failed_gpu_check_blocks_workers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output, env = self.recorder(Path(directory))
+            env["TEST_GPU_CHECK_EXIT"] = "7"
+            result = subprocess.run(
+                ["bash", str(ROOT / "scripts/run_h800_80g_1gpu.sh")],
+                env=env, capture_output=True)
+            self.assertEqual(result.returncode, 7)
+            self.assertFalse(output.exists())
+
     def recorder(self, directory):
         interpreter = directory / "python recorder"
         interpreter.write_text(

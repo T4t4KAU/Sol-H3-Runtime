@@ -1,6 +1,6 @@
 # SOL-H3
 
-基于 NVlabs/Sana 的官方 SOL-H3 独立推理引擎，保留完整官方实现，以官方代码作为默认入口。**额外提供 8×RTX4090 24 GiB 的可选适配**，通过单独的 Bash 脚本调用。
+基于 NVlabs/Sana 的官方 SOL-H3 独立推理引擎，保留完整官方实现，以官方代码作为默认入口。额外提供按服务器配置选择的启动脚本，包括 RTX4090 24 GiB 八卡与 H800 80 GiB 单卡。
 
 官方源码固定于 `781e8341fb3b29d3aea5d50265772e9619340b66`；82 个文件均与上游 Git blob 一致。适配代码使用已有完整生成验证的冻结版本。模型权重、Python 环境和生成结果另行准备。LINs Lab 的权重统一使用 `/Datasets/public_models/SOL-H3/`；代码、环境与输出仍各自存放。
 
@@ -9,7 +9,7 @@ LINs Lab 的运行步骤见 [部署与推理指南](docs/LINS_LAB.md)，从取�
 
 在 GPU 服务器运行 `bash serve.sh` 可启动 HTTP 推理服务，按实际配置设置 `--entry`、`--model` 和 `--adapter`。服务提供请求排队、状态查询和视频下载，完整步骤见 [API 服务部署](docs/API.md)。
 
-服务器认证、GPU 申请与排队、环境和权重位置，以及暂存非 DiT 输入后只测 DiT 的流程，见 [profiling 交接](docs/PROFILING_HANDOFF.md)。交接使用服务器上已保留的 native 双卡／四卡研究驱动与真实条件缓存；这些实验资产独立于仓库。`tools/profile_single_stage.py` 是另一条分阶段适配路径的观察包装器，目前仅通过 CPU 检查。
+LINs Lab（4090／Determined）的认证、GPU 申请与排队、环境和权重位置，以及暂存非 DiT 输入后只测 DiT 的流程，见 [profiling 交接](docs/PROFILING_HANDOFF.md)。交接使用服务器上已保留的 native 双卡／四卡研究驱动与真实条件缓存；这些实验资产独立于仓库。`tools/profile_single_stage.py` 是另一条分阶段适配路径的观察包装器，目前仅通过 CPU 检查。
 
 ## LINs Lab 服务器配置
 
@@ -69,6 +69,12 @@ export SOL_H3_ASSETS=/Datasets/public_models/SOL-H3
 适配入口保留已验证的 dense Flash SDPA、混合参数类型和 eager VAE 配置；未默认开启稀疏注意力、AdaLN 预计算、packed SP、原生 kernel fusions、量化计算/通信或 parallel VAE。它是显存适配配置，其性能不能代表官方全优化配置。
 
 可选入口还包括 `run_original_8x4090.sh`（原版 H3，49 次前向）和 `run_two_stage_8x4090.sh`（H3 四次＋LTX 三次前向，另需外部源码与权重）。
+
+## 可选适配：H800 80 GiB 单卡
+
+入口为 `scripts/run_h800_80g_1gpu.sh`，复用现有分阶段加载实现。它使用 FastH3 四次前向、dense Flash SDPA、BF16 计算、AdaLN 预计算和原生算子融合；文本编码、DiT、视频 VAE 和音频 VAE 分阶段执行。单卡不进行 FSDP 权重分片或 SP 通信。原样官方源码与冻结适配文件均未修改。
+
+对应环境依赖见 `requirements-h800.txt`，采用 PyTorch 2.10.0+cu128，省略此路径不用的 CUDA13 BSA 依赖。准备好模型和环境、取得一张 H800 后，可用该入口直接推理，或传给 `serve.sh` 启动 API；具体命令见 [H800 API](docs/API.md#h800-80-gib-单卡)。API 进程持续运行，生成任务依次启动独立推理进程，每个请求重新加载模型。
 
 ## 代码组织
 

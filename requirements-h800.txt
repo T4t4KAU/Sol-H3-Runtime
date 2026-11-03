@@ -1,0 +1,18 @@
+# Single H800 dense profile; CUDA13 CuDNN BSA extras are not used.
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.10.0+cu128
+torchvision==0.25.0+cu128
+torchaudio==2.10.0+cu128
+accelerate>=1.9
+av>=14
+diffusers @ git+https://github.com/huggingface/diffusers.git@abc5e9bf71fd38f53cd471bc3acaa84bc5ecbfdc
+huggingface-hub>=1.23,<2
+numpy
+peft==0.20.0
+Pillow
+protobuf
+safetensors>=0.8
+sentencepiece
+tokenizers==0.22.2
+triton==3.6.0
+transformers==5.8.1

@@ -99,3 +99,22 @@ kill -TERM "$(cat "$SOL_H3_WORK/logs/api.pid")"
 ## 验证范围
 
 已用 CPU 替代推理进程测试 HTTP 提交、鉴权、参数校验、队列容量、串行执行、状态查询、下载、失败记录和重启恢复。2026-11-02 已在 8×RTX4090 24 GiB 上完成真实 API 请求验收：鉴权提交、状态查询、HTTP 视频下载、视频和音频完整解码均通过；本机转发通道访问也已验证。输出为 1344×768、124 帧、24 FPS。
+
+## H800 80 GiB 单卡
+
+在 Slurm 分配的一张 H800 上使用 `scripts/run_h800_80g_1gpu.sh`。先设置当前服务器上实际的 `SOL_H3_PYTHON`、`SOL_H3_MODEL`、`SOL_H3_ADAPTER`、`SOL_H3_API_KEY` 和 `SOL_H3_API_DATA`；这些路径与 LINs Lab 的公共路径可以不同。模型必须完整位于计算节点可见的存储上，不能在请求处理中下载权重。
+
+```bash
+cd /path/to/Sol-H3-Runtime
+bash serve.sh \
+  --host 0.0.0.0 --port 18080 \
+  --entry scripts/run_h800_80g_1gpu.sh \
+  --model "$SOL_H3_MODEL" --adapter "$SOL_H3_ADAPTER" \
+  --data-dir "$SOL_H3_API_DATA" --capacity 16
+```
+
+使用 `sbatch` 托管此命令可在退出终端后继续提供服务；申请 `--gres=gpu:1`，并根据站点配置设置 account、partition 和运行时限。该入口启用分阶段加载和 AdaLN 预计算，保持单卡 dense BF16 路径；不调用八卡启动器，不要求 CUDA13 的 BSA 组件。
+
+客户端在服务器网络内访问 `http://计算节点名:18080`，提交、排队、鉴权、查询和下载接口与上文一致。GPU 分配结束时服务停止；`/health` 表示 HTTP 工作线程可用，实际生成是否成功以任务结果及媒体检查为准。
+
+2026-11-03 已在一张 H800 80 GiB 上通过真实 API 请求：异步提交、状态查询、鉴权及 HTTP 视频下载均正常，输出的 1344×768、124 帧、24 FPS 视频及音频完整解码通过。此配置使用 FastH3 四次去噪和分阶段加载；本次为功能验收，不是独立 DiT benchmark。
